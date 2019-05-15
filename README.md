@@ -11,7 +11,7 @@ The other piece of code needed for this to work is the class Dice.py
 - First download both Make_a_warhammer_PC.py and Dice.py
 - Second, open up the command line and run the command:
 
-> python Make_a_warhammer_PC.py
+`python Make_a_warhammer_PC.py`
 
 
 
