@@ -1,7 +1,9 @@
-#!/usr/bin/python
+#!/home/joe/anaconda3/bin/python
 
 from Dice import DiceSet
 import numpy as np
+import pandas as pd
+
 
 def GetRace():
     d = DiceSet()
@@ -20,13 +22,33 @@ def GetRace():
 
 
 
-#def GetAJob(race):
+def GetAJob(race):
     # need 5 tables of careers, one for each race
     # there are Careers which are grouped in sets called Classes
     # each races has a dictionary
     # in that dic the career is the KEY and
     # the VALUE is a list of numbers corresponding
-    # to the Career
+    # to the Career ex: human_careers = {..., 'Nun': [4, 5], ...}
+    # Then you can look up the Class in the Class dic
+    # ex: human_classes = {'Academic': [..., 'Nun',...], ...}
+    TCT = pd.read_csv('CareerTable.csv')
+    print(TCT.info())
+    TCT["Career/Species"] = TCT['Career/Species'].astype('str') 
+    print(TCT["Career/Species"].dtype)
+    # print(TCT.head())
+           #Class Career/Species  Human  Dwarf Halfling High Elf Wood Elf
+# 0  ACADEMICS     Apothecary     01     01       01    01–02        –
+# 1        NaN       Engineer     02  02–04       02        –        –
+# 2        NaN         Lawyer     03  05–06    03–04    03–06        –
+# 3        NaN            Nun  04-05      –        –        –        –
+# 4        NaN      Physician     06     07    05–06    07–08        –
+
+   # print(TCT.loc[:, ["Career/Species", "Human"]])
+   # print(TCT.loc[:, ["Career/Species", "Wood Elf"]])
+   # print(TCT.loc[:, ["Career/Species", "High Elf"]])
+   # print(TCT.loc[:, ["Career/Species", "Halfling"]])
+   # print(TCT.loc[:, ["Career/Species", "Dwarf"]])
+    
     
 
 def GetAbScore(race):
@@ -73,4 +95,6 @@ if __name__ == '__main__':
     print(Race)
     abScore = GetAbScore(Race)
     print(abScore)
+    GetAJob(Race)
+    
     
