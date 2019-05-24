@@ -33,6 +33,7 @@ def GetAJob(race):
     # ex: human_classes = {'Academic': [..., 'Nun',...], ...}
     TCT = pd.read_csv('CareerTable.csv')
     print(TCT.info())
+    # this should convert the dtype...FML
     TCT["Career/Species"] = TCT['Career/Species'].astype('str') 
     print(TCT["Career/Species"].dtype)
     # print(TCT.head())
