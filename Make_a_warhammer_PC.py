@@ -31,12 +31,33 @@ def GetAJob(race):
     # to the Career ex: human_careers = {..., 'Nun': [4, 5], ...}
     # Then you can look up the Class in the Class dic
     # ex: human_classes = {'Academic': [..., 'Nun',...], ...}
+    
+    files = open('CareerTable.txt', 'r')
+    Grand_table = files.read()
+    # print(Grand_table)
+
+    human_careers = {}
+    halfling_careers = {}
+    dwarf_careers = {}
+    highElf_careers = {}
+    woodElf_careers = {}
+    parsed = []
+    
+    for line in Grand_table:
+        print(line.split(','))
+#    print(parsed)
+    '''
     TCT = pd.read_csv('CareerTable.csv')
     print(TCT.info())
+    to_string = lambda x: str(x).split(',')
     # this should convert the dtype...FML
-    TCT["Career/Species"] = TCT['Career/Species'].astype('str') 
-    print(TCT["Career/Species"].dtype)
-    # print(TCT.head())
+    TCT['Career/Species'].apply(to_string) 
+    TCT['Human'].astype(str)
+
+
+    print(TCT.info())
+    print(TCT.head())
+    '''
            #Class Career/Species  Human  Dwarf Halfling High Elf Wood Elf
 # 0  ACADEMICS     Apothecary     01     01       01    01–02        –
 # 1        NaN       Engineer     02  02–04       02        –        –
