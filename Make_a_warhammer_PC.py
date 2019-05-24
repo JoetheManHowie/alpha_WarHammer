@@ -21,6 +21,21 @@ def GetRace():
         return 'Wood Elf'
 
 
+def convert2Int(species):
+    new_list = []
+    for num in species:
+        if ('-' or chr(196)) in num:
+            inif = 'in if'
+            print(inif, num)
+            # split and fill
+        else:
+            noinif = 'not in if'
+            print(noinif, num)
+            new_list.append([int(num)])
+    
+    
+    return new_list
+            
 
 def GetAJob(race):
     # need 5 tables of careers, one for each race
@@ -31,36 +46,27 @@ def GetAJob(race):
     # to the Career ex: human_careers = {..., 'Nun': [4, 5], ...}
     # Then you can look up the Class in the Class dic
     # ex: human_classes = {'Academic': [..., 'Nun',...], ...}
-    '''
-    files = open('CareerTable.txt', 'r')
-    Grand_table = files.read()
-    # print(Grand_table)
-    '''
+    
     human_careers = {}
     halfling_careers = {}
     dwarf_careers = {}
     highElf_careers = {}
     woodElf_careers = {}
-    '''
-    parsed = []
     
-    for line in Grand_table:
-        print(line.split(','))
-#    print(parsed)
-    '''
     TCT = pd.read_csv('CareerTable.csv', dtype = str)
-    print(TCT.info())
-    classes = TCT["Class"].values()
-    careers = TCT["Career/Species"].values()
-    humans = TCT["Human"].values()
-    halflings = TCT["Halfling"].values()
-    dwarves = TCT["Dwarf"].values()
-    highElf = TCT["High Elf"].values()
-    woodElf = TCT["Wood Elf"].values()
 
-    print(TCT.info())
-    print(TCT.head())
+    print(TCT)
+    classes = TCT["Class"].values
+    careers = TCT["Career/Species"].values
+    humans = convert2Int(TCT["Human"].values)
+    halflings = TCT["Halfling"].values
+    dwarves = TCT["Dwarf"].values
+    highElf = TCT["High Elf"].values
+    woodElf = TCT["Wood Elf"].values
     
+    print(classes)
+    print(humans)
+    print(careers)
            #Class Career/Species  Human  Dwarf Halfling High Elf Wood Elf
 # 0  ACADEMICS     Apothecary     01     01       01    01–02        –
 # 1        NaN       Engineer     02  02–04       02        –        –
