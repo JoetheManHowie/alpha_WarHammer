@@ -101,8 +101,17 @@ def GetAJob(race):
     woodElves = convert2Int(TCT["Wood Elf"].values)
 
     # makes a map of classes to careers
+    Classes_for_careers = {}
+    this_occu = 'butts'
+    for i in range(0, len(classes)):
+        this_class = str(classes[i])
+        if(this_class != 'nan'):
+            this_occu = this_class
+        elif(this_class == 'nan'):
+            classes[i] = this_occu
 
-    
+    career_class = Make_a_Dick(careers, classes)
+        
     
     # makes a map of the maps for each race
     master_map = {}
@@ -115,10 +124,11 @@ def GetAJob(race):
     # TIME TO ROLL
     d = DiceSet()
     roll = d.d100
+    print("career roll = " +str(roll))
     my_possible_careers = master_map[race]
     for career, nums in my_possible_careers.items():
         if roll in nums:
-            return career, ''
+            return career, career_class[career]
     
 
 
@@ -164,9 +174,8 @@ def GetAbScore(race):
         
 if __name__ == '__main__':
     Race = GetRace()
-    print(Race)
     abScore = GetAbScore(Race)
-    print(abScore)
     myJob, myClass = GetAJob(Race)
-    print(myJob, myClass)
+    print(r'You are a %s %s, working as a %s' %(Race, myClass, myJob))
+    print(abScore)
     
