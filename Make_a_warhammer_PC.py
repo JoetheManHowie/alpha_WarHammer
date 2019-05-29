@@ -89,7 +89,9 @@ def GetAJob(race):
         
     TCT = pd.read_csv('CareerTable.csv', dtype = str)
 
-    print(TCT)
+    #print(TCT)
+    # convert to arrays of strings, which are the
+    # converted to arrays of lists of int's
     classes = TCT["Class"].values
     careers = TCT["Career/Species"].values
     humans = convert2Int(TCT["Human"].values)
@@ -98,30 +100,29 @@ def GetAJob(race):
     highElves = convert2Int(TCT["High Elf"].values)
     woodElves = convert2Int(TCT["Wood Elf"].values)
 
-    human_careers = Make_a_Dick(careers, humans)
-    halfling_careers = Make_a_Dick(careers, halflings)
-    dwarf_careers = Make_a_Dick(careers, dwarves)
-    highElf_careers = Make_a_Dick(careers, highElves)
-    woodElf_careers = Make_a_Dick(careers, woodElves)
-    
-    #print(classes)
-    print(humans)
-    #print(careers)
-           #Class Career/Species  Human  Dwarf Halfling High Elf Wood Elf
-# 0  ACADEMICS     Apothecary     01     01       01    01–02        –
-# 1        NaN       Engineer     02  02–04       02        –        –
-# 2        NaN         Lawyer     03  05–06    03–04    03–06        –
-# 3        NaN            Nun  04-05      –        –        –        –
-# 4        NaN      Physician     06     07    05–06    07–08        –
+    # makes a map of classes to careers
 
-   # print(TCT.loc[:, ["Career/Species", "Human"]])
-   # print(TCT.loc[:, ["Career/Species", "Wood Elf"]])
-   # print(TCT.loc[:, ["Career/Species", "High Elf"]])
-   # print(TCT.loc[:, ["Career/Species", "Halfling"]])
-   # print(TCT.loc[:, ["Career/Species", "Dwarf"]])
     
+    
+    # makes a map of the maps for each race
+    master_map = {}
+    master_map['Human'] =Make_a_Dick(careers, humans)
+    master_map['Halfling'] = Make_a_Dick(careers, halflings)
+    master_map['Dwarf'] = Make_a_Dick(careers, dwarves)
+    master_map['High Elf'] = Make_a_Dick(careers, highElves)
+    master_map['Wood Elf'] = Make_a_Dick(careers, woodElves)
+
+    # TIME TO ROLL
+    d = DiceSet()
+    roll = d.d100
+    my_possible_careers = master_map[race]
+    for career, nums in my_possible_careers.items():
+        if roll in nums:
+            return career, ''
     
 
+
+    
 def GetAbScore(race):
     # need 5 tables for the ability scores, one for each race option
     # make a dictionary with races as keys.
@@ -166,6 +167,6 @@ if __name__ == '__main__':
     print(Race)
     abScore = GetAbScore(Race)
     print(abScore)
-    GetAJob(Race)
-    
+    myJob, myClass = GetAJob(Race)
+    print(myJob, myClass)
     
