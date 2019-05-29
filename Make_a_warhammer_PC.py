@@ -22,21 +22,59 @@ def GetRace():
 
 
 def convert2Int(species):
+    '''This function takes an arrray of strings with elements in the form
+    '55' or '6-9'. The function turns the array into a list of lists in the form
+    [[6, 7, 8, 9], ..., [55]]'''
+    
     new_list = []
     for num in species:
-        #print((u'\u2010'), (u'\u2013'))
-        if (('-' in num ) or (u'\u2013' in num )):
-            inif = 'in if'
-            print(inif, num)
-            # split and fill
+        # \u2013 is the unicode for the en dash character
+        if (u'\u2013' in num ):
+            # skips the no number entries
+            if(num == u'\u2013'):
+                # we need the array length to stay the same
+                # so that it is still one to one with
+                # the careers array
+                new_list.append([])
+                continue
+            # splits the string and fills in the missing numbers
+            rang = num.split(u'\u2013')
+            minNum = int(rang[0])
+            maxNum = int(rang[1])
+            this_entry = []
+            for i in range(minNum, maxNum +1):
+                this_entry.append(i)
+
+            new_list.append(this_entry)
+        # checks for regular dash otherwise same as above
+        elif('-' in num):
+             # skips the no number entries
+            if(num == '-'):
+                new_list.append([])
+                continue
+            # splits the string and fills in the missing numbers
+            rang = num.split('-')
+            minNum = int(rang[0])
+            maxNum = int(rang[1])
+            this_entry = []
+            for i in range(minNum, maxNum +1):
+                this_entry.append(i)
+
+            new_list.append(this_entry)
+        # just a number string
         else:
-            noinif = 'not in if'
-            print(noinif, num)
             new_list.append([int(num)])
     
-    
     return new_list
-            
+           
+
+def Make_a_Dick(careers, values):
+    new_dic = {}
+    nn = len(careers)
+    for i in range(0, nn):
+        new_dic[careers[i]] = values[i]
+    return new_dic
+
 
 def GetAJob(race):
     # need 5 tables of careers, one for each race
@@ -48,26 +86,27 @@ def GetAJob(race):
     # Then you can look up the Class in the Class dic
     # ex: human_classes = {'Academic': [..., 'Nun',...], ...}
     
-    human_careers = {}
-    halfling_careers = {}
-    dwarf_careers = {}
-    highElf_careers = {}
-    woodElf_careers = {}
-    
+        
     TCT = pd.read_csv('CareerTable.csv', dtype = str)
 
     print(TCT)
     classes = TCT["Class"].values
     careers = TCT["Career/Species"].values
     humans = convert2Int(TCT["Human"].values)
-    halflings = TCT["Halfling"].values
-    dwarves = TCT["Dwarf"].values
-    highElf = TCT["High Elf"].values
-    woodElf = TCT["Wood Elf"].values
+    halflings = convert2Int(TCT["Halfling"].values)
+    dwarves = convert2Int(TCT["Dwarf"].values)
+    highElves = convert2Int(TCT["High Elf"].values)
+    woodElves = convert2Int(TCT["Wood Elf"].values)
+
+    human_careers = Make_a_Dick(careers, humans)
+    halfling_careers = Make_a_Dick(careers, halflings)
+    dwarf_careers = Make_a_Dick(careers, dwarves)
+    highElf_careers = Make_a_Dick(careers, highElves)
+    woodElf_careers = Make_a_Dick(careers, woodElves)
     
-    print(classes)
+    #print(classes)
     print(humans)
-    print(careers)
+    #print(careers)
            #Class Career/Species  Human  Dwarf Halfling High Elf Wood Elf
 # 0  ACADEMICS     Apothecary     01     01       01    01–02        –
 # 1        NaN       Engineer     02  02–04       02        –        –
