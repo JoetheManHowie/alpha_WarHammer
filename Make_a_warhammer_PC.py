@@ -24,7 +24,8 @@ def GetRace():
 def convert2Int(species):
     new_list = []
     for num in species:
-        if ('-' or chr(196)) in num:
+        #print((u'\u2010'), (u'\u2013'))
+        if (('-' in num ) or (u'\u2013' in num )):
             inif = 'in if'
             print(inif, num)
             # split and fill
