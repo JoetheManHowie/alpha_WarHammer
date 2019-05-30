@@ -4,7 +4,6 @@ from Dice import DiceSet
 import numpy as np
 import pandas as pd
 
-
 def GetRace():
     d = DiceSet()
     race_roll = d.d100
@@ -129,7 +128,6 @@ def GetAJob(race):
     for career, nums in my_possible_careers.items():
         if roll in nums:
             return career, career_class[career]
-    
 
 
     
@@ -162,14 +160,19 @@ def GetAbScore(race):
         your_abScore[AB[count]] = 2*d.d10 +mod
         count += 1
 
-    your_abScore['Wounds'] = "SB + (2 x TB) + WPB"
+    # Calc wounds
+    SB = int(your_abScore['S']/10)
+    TB = int(your_abScore['T']/10)
+    WPB = int(your_abScore['WP']/10)
+    your_abScore['Wounds'] = int(SB + (2*TB) + WPB)
     
     count = 0
     for lif in afterWounds[race]:
         your_abScore[AFW[count]] = lif
         count += 1
 
-    return your_abScore
+    yeeBoo = pd.DataFrame.from_dict(your_abScore, orient = 'index')
+    return yeeBoo
 
         
 if __name__ == '__main__':
@@ -178,4 +181,4 @@ if __name__ == '__main__':
     myJob, myClass = GetAJob(Race)
     print(r'You are a %s %s, working as a %s' %(Race, myClass, myJob))
     print(abScore)
-    
+
