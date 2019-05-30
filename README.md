@@ -10,7 +10,7 @@ The other piece of code needed for this to work is the class Dice.py
 
 We will need python 3 installed for these programs to run.
 If you do not already, you will want to install Anaconda, because it's the bomb digity!
-you need to install the following as well:
+You need to install the following as well:
 
 - `conda install numpy`
 - `conda install pandas`
