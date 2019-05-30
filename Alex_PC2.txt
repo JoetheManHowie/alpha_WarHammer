@@ -1,0 +1,20 @@
+race roll = 93
+career roll = 40
+You are a Halfling COURTIERS, working as a Servant
+               0
+WS            18
+BS            32
+S             18
+T             36
+I             22
+AG            24
+Dex           48
+Int           26
+WP            48
+Fel           34
+Wounds        11
+Fate           0
+Resiliance     2
+Extra Points   3
+Movement       3
+
