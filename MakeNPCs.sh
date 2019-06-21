@@ -7,7 +7,4 @@ for((i = 0; i<MAX; i++)); do
 	'./Make_a_warhammer_PC.py' 
 done
 
-'./whatsNext.sh'
-
-
-
+./whatsNext.sh
