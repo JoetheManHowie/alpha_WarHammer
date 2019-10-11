@@ -9,7 +9,7 @@ from pickle import load
 def GetRace():
     d = DiceSet()
     race_roll = d.d100
-    print('race roll = ' +str(race_roll))
+    # print('race roll = ' +str(race_roll))
     if race_roll < 91:
         return 'Human'
     elif race_roll > 90 and race_roll < 95:
@@ -37,7 +37,7 @@ def GetAJob(race):
     # TIME TO ROLL
     d = DiceSet()
     roll = d.d100
-    print("career roll = " +str(roll))
+    # print("career roll = " +str(roll))
     my_possible_careers = master_map[race]
     for career, nums in my_possible_careers.items():
         if roll in nums:
@@ -102,7 +102,7 @@ def GetAbScore(race):
 
 
 def GetRaceTalents(race):
-    race_talent = {"Human":   ['Doomed', 'Savvy or Suave', '3 Random Talents'],
+    race_talent = {"Human":    ['Doomed', 'Savvy or Suave', '3 Random Talents'],
                    "Dwarf":    ['Magic Resistance', 'Night Vision', 'Read/Write or Relentless',
                                 'Resolute or Strong-minded', 'Sturdy'],
                    "Halfling": ['Acute Sense (Taste)', 'Night Vision', 'Resistance (Chaos)',
@@ -111,7 +111,23 @@ def GetRaceTalents(race):
                                 'Second Sight or Sixth Sense', 'Read/Write'],
                    "Wood Elf": ['Acute Sense (Sight)', 'Hardy or Second Sight', 'Night Vision',
                                 'Read/Write or Very Resilient', 'Rover'] }
-    return race_talent[race]
+    these_tal = race_talent[race]
+    isRand = these_tal[-1].split()
+    if len(isRand)>1:
+        these_tal = these_tal[:-1]
+        numRT = int(isRand[0])
+        randTab = touch_my_pickle("RandTalent_table.pickle")
+        i=0
+        while i < numRT:
+            d = DiceSet()
+            my_roll = d.d100
+            for tal, nums in randTab.items():
+                if my_roll in nums:
+                    these_tal.append(tal)
+
+            i+=1
+        
+    return these_tal
     
 
 def GetRaceSkills(race):
@@ -121,11 +137,9 @@ def GetRaceSkills(race):
                   "Dwarf":    ['Consume Alcohol', 'Cool', 'Endurance', 'Entertain (Storytelling)',
                                'Evaluate', 'Intimidate', 'Language (Khazalid)', 'Lore (Dwarfs)',
                                'Lore (Geology)', 'Lore (Metallurgy)', 'Melee (Basic)', 'Trade (any one)'], 
-
                   "Halfling": ['Charm', 'Consume Alcohol', 'Dodge', 'Gamble', 'Haggle',
                                'Intuition', 'Language (Mootish)', 'Lore (Reikland)', 'Perception',
                                'Sleight of Hand', 'Stealth (Any)', 'Trade (Cook)' ],
-
                   "High Elf": ['Cool', 'Entertain (Sing)', 'Evaluate', 'Language (Eltharin)',
                                'Leadership', 'Melee (Basic)', 'Navigation', 'Perception',
                                'Play (anyone)', 'Ranged (Bow)', 'Sail', 'Swim'],
@@ -135,21 +149,43 @@ def GetRaceSkills(race):
     return race_skill[race]
 
 
+def PhysicalFeatures(race):
+    age = 0;
+    height = 0;
+    if race == 'Human':
+        age = 15 + DiceSet().d10
+        height = 2.54*(4*12 + 9 + sum([DiceSet().d10 for i in range(0, 2)])) 
+    elif race == "Dwarf":
+        age = 15 + sum([DiceSet().d10 for i in range(0, 10)])
+        height = 2.54*(4*12 + 3 + DiceSet().d10) 
+    elif race == "Halfling":
+        age = 15 + sum([DiceSet().d10 for i in range(0, 5)])
+        height = 2.54*(5*12+11+ DiceSet().d10) 
+    else:
+        age = 30 + sum([DiceSet().d10 for i in range(0, 10)])
+        height = 2.54*(3*12 +1 + DiceSet().d10) 
+
+    return (age, height)
+        
 if __name__ == '__main__':
     Race = GetRace()
     abScore = GetAbScore(Race)
     myJob, myClass = GetAJob(Race)
     race_skills = GetRaceSkills(Race)
     race_talents = GetRaceTalents(Race)
+    age, height = PhysicalFeatures(Race)
+
     
     #### Print results ####
-    print('RACE: %s, CLASS: %s, CAREER: %s' %(Race, myClass, myJob))
+    print('RACE: %s\nCLASS: %s\nCAREER: %s' %(Race, myClass, myJob))
     print(abScore)
     print("\nSKILLS:\t(Pick three with 3 pts Advantage, and three with 5 pts Advantage):")
     [print("\t%s" %sk) for sk in race_skills ]
     print("Go to your Career Path and Spend 40 pts Advantage on your starting skills \n\
 (Max 10pts per skill with these points) Note there is enough Advantage \n\
 to put 5 pts in each skill in your starting class (which is required to level up)!\n")
-    print("TALENTS: (Go to page 37 of the handbook for the Random Talent Table):")
+    print("TALENTS: (Humans & Halfling, Random Talents are rolled for you):")
     [print("\t%s" %ta) for ta in race_talents ]
-    print("Go to your Career Path Take ONE talent from your starting career path.\n")
+    print("Note: if any doubles occurred, you may re-roll.\n\
+Go to your Career Path Take ONE talent from your starting career path.\n")
+    print("Physical Features:\n\tAge:%7s\n\tHeight:%7.6s cm" %(age, height))
