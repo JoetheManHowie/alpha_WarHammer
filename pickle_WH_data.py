@@ -9,13 +9,13 @@ def tickle_my_pickle(dic, pickle_file):
     pickle_out.close()
     
 
-def convert2Int(species):
+def convert2Int(strNum):
     '''This function takes an arrray of strings with elements in the form 
     '55' or '6-9'. The function turns the array into a list of lists in the form 
     [[6, 7, 8, 9], ..., [55]]'''
 
     new_list = []    
-    for num in species:
+    for num in strNum:
         # \u2013 is the unicode for the en dash character  
         if (u'\u2013' in num ):
             # skips the no number entries
@@ -66,7 +66,7 @@ def make_career_table():
     # Then you can look up the Class in the Class dic
     # ex: human_classes = {'Academic': [..., 'Nun',...], ...}
 
-    TCT = pd.read_csv('CareerTable.csv', dtype = str)
+    TCT = pd.read_csv('PDF_piece/CareerTable.csv', dtype = str)
 
     # print(TCT)
     # convert to arrays of strings, which are the
@@ -104,15 +104,29 @@ def make_career_table():
     return (master_map, career_class)
 
 
-def Make_a_Dick(careers, values):
+def make_rand_talent_table():
+    randTal = pd.read_csv('PDF_piece/RandomTalents.csv', dtype = str)
+    tab = pd.concat([pd.DataFrame(randTal['Roll']), pd.DataFrame(randTal['Description'])], axis =1)
+    tabB = pd.concat([pd.DataFrame(randTal['Roll.1']), pd.DataFrame(randTal['Description.1'])], axis=1)
+    tabB = tabB.rename(columns= {"Roll.1": "Roll", "Description.1": "Description"})
+    res = tab.append(tabB)
+    res = res.dropna()
+    res = res.reset_index(drop=True)
+    print(res)
+    return res
+
+
+def Make_a_Dick(keys, values):
     new_dic = {}
-    nn = len(careers)
+    nn = len(keys)
     for i in range(0, nn):
-        new_dic[careers[i]] = values[i]
+        new_dic[keys[i]] = values[i]
     return new_dic
 
 
 if __name__=="__main__":
-    dic_mm, dic_cc  = make_career_table()
-    tickle_my_pickle(dic_mm, "career_table.pickle")
-    tickle_my_pickle(dic_cc, "classes_table.pickle")
+    
+    # dic_mm, dic_cc  = make_career_table()
+    # tickle_my_pickle(dic_mm, "career_table.pickle")
+    # tickle_my_pickle(dic_cc, "classes_table.pickle")
+    make_rand_talent_table()
