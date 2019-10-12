@@ -133,7 +133,7 @@ def make_PT_table(filepath):
     master_map['Dwarf'] = Make_a_Dick(dwarf, rollers)
     master_map['High Elf'] = Make_a_Dick(high_elf, rollers)
     master_map['Wood Elf'] = Make_a_Dick(wood_elf, rollers)
-    #print(master_map)
+    master_map['Wood Elf']['Chestnut'] = [8, 9, 10, 11, 12, 13, 14]
     return master_map
 
 

@@ -263,10 +263,10 @@ def PhysicalFeatures(race):
                 height = 2.54*(4*12 + 3 + DiceSet().d10) 
         elif race == "Halfling":
                 age = 15 + sum([DiceSet().d10 for i in range(0, 5)])
-                height = 2.54*(5*12+11+ DiceSet().d10) 
+                height = 2.54*(3*12 +1 + DiceSet().d10) 
         else:
                 age = 30 + sum([DiceSet().d10 for i in range(0, 10)])
-                height = 2.54*(3*12 +1 + DiceSet().d10) 
+                height = 2.54*(5*12+11+ DiceSet().d10) 
                 
         return (age, height, eye_color, hair_color)
 
