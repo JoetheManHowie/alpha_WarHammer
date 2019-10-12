@@ -112,8 +112,29 @@ def make_rand_talent_table():
     res = tab.append(tabB)
     res = res.dropna()
     res = res.reset_index(drop=True)
-    print(res)
-    return res
+    rolls = convert2Int(res["Roll"])
+    dick_tab = Make_a_Dick(res["Description"], rolls)
+    return dick_tab
+
+def make_PT_table(filepath):
+    eye_tab = pd.read_csv(filepath)
+    eye_tab = eye_tab.drop(["Unnamed: 6"], axis = 1)
+
+    rollers = convert2Int(eye_tab["2d10"].values)
+    human = eye_tab["Human"].values
+    halfling = eye_tab["Halfling"].values
+    dwarf = eye_tab["Dwarf"].values
+    high_elf = eye_tab["High Elf"].values
+    wood_elf = eye_tab["Wood Elf"].values
+    
+    master_map = {}
+    master_map['Human'] =Make_a_Dick(human, rollers)
+    master_map['Halfling'] = Make_a_Dick(halfling, rollers)
+    master_map['Dwarf'] = Make_a_Dick(dwarf, rollers)
+    master_map['High Elf'] = Make_a_Dick(high_elf, rollers)
+    master_map['Wood Elf'] = Make_a_Dick(wood_elf, rollers)
+    #print(master_map)
+    return master_map
 
 
 def Make_a_Dick(keys, values):
@@ -125,8 +146,14 @@ def Make_a_Dick(keys, values):
 
 
 if __name__=="__main__":
-    
-    # dic_mm, dic_cc  = make_career_table()
-    # tickle_my_pickle(dic_mm, "career_table.pickle")
-    # tickle_my_pickle(dic_cc, "classes_table.pickle")
-    make_rand_talent_table()
+    '''
+    dic_mm, dic_cc  = make_career_table()
+    tickle_my_pickle(dic_mm, "career_table.pickle")
+    tickle_my_pickle(dic_cc, "classes_table.pickle")
+    randTab = make_rand_talent_table()
+    tickle_my_pickle(randTab, "RandTalent_table.pickle")
+    '''
+    eye_table = make_PT_table("PDF_piece/just_eyes.csv")
+    hair_table = make_PT_table("PDF_piece/just_hair.csv")
+    tickle_my_pickle(eye_table, "eye_table.pickle")
+    tickle_my_pickle(hair_table, "hair_table.pickle")
