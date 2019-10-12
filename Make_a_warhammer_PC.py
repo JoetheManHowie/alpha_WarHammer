@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+## ex: ./Make_a_warhammer_PC.py --race= --career='Witch Hunter' > myNewCharacter.txt
+
+import sys
 from Dice import DiceSet
 import numpy as np
 import pandas as pd
@@ -7,16 +10,38 @@ from pickle import load
 
 
 def main():
-        Race = GetRace()
-        abScore = GetAbScore(Race)
-        myJob, myClass = GetAJob(Race)
+        try:
+                args = sys.argv
+                Race = args[1][7:]
+                abScore = ''
+                myJob = args[2][9:]
+                myClass = ''
+                if Race=='' and myJob=='':
+                        Race = GetRace()
+                        abScore = GetAbScore(Race)
+                        myJob, myClass = GetAJob(Race)
+                elif myJob=='' and Race!='':
+                        abScore = GetAbScore(Race)
+                        myJob, myClass = GetAJob(Race)
+                elif Race=='' and myJob!='':
+                        Race = GetRace() 
+                        abScore = GetAbScore(Race)
+                        myClass = GetMyClass(myJob)
+                else:
+                        Race = GetRace() 
+                        abScore = GetAbScore(Race)
+                        myJob, myClass = GetAJob(Race)
+        except KeyError:
+                print("Incorrect input, must be in the form:\n./Make_a_warhammer_PC.py --race='Dwarf' --career='Miner'")
+                print("If you want random race and/or career leave it blank:\n./Make_a_warhammer_PC.py --race= --career=")
+                exit()
         race_skills = GetRaceSkills(Race)
         race_talents = GetRaceTalents(Race)
         age, height, eye, hair = PhysicalFeatures(Race)
         traps = GetClassTrappings(myClass)
         
-        
         #### Print results ####
+
         for args in (("RACE:", Race), ("CLASS:", myClass), ("CAREER:", myJob)):
                 print("{0:<10} {1:<10}".format(*args))
                 
@@ -40,8 +65,8 @@ Go to your Career Path Take ONE talent from your starting career path.\n")
         [print('\t%s' %itm) for itm in traps]
         
         return 0
-                
-                
+
+
 def GetRace():
         d = DiceSet()
         race_roll = d.d100
@@ -56,7 +81,13 @@ def GetRace():
                 return 'High Elf'
         else:
                 return 'Wood Elf'
+        return 0
         
+
+def GetMyClass(job):
+        cc = touch_my_pickle("classes_table.pickle")
+        return cc[job]
+
         
 def GetAJob(race):
         # need 5 tables of careers, one for each race
@@ -80,7 +111,7 @@ def GetAJob(race):
                         return career, career_class[career]
                 
         
-
+        return 0
         
         
 def touch_my_pickle(pickle_file):
@@ -183,7 +214,7 @@ def GetRaceTalents(race):
                                         
                         i+=1
                 
-                return these_tal
+        return these_tal
 
         
 def GetRaceSkills(race):
@@ -242,4 +273,3 @@ def PhysicalFeatures(race):
 
 if __name__ == '__main__':
         main()
-        
