@@ -146,14 +146,16 @@ def Make_a_Dick(keys, values):
 
 
 if __name__=="__main__":
-    '''
+
     dic_mm, dic_cc  = make_career_table()
     tickle_my_pickle(dic_mm, "career_table.pickle")
     tickle_my_pickle(dic_cc, "classes_table.pickle")
-    randTab = make_rand_talent_table()
-    tickle_my_pickle(randTab, "RandTalent_table.pickle")
-    '''
+
     eye_table = make_PT_table("PDF_piece/just_eyes.csv")
     hair_table = make_PT_table("PDF_piece/just_hair.csv")
     tickle_my_pickle(eye_table, "eye_table.pickle")
     tickle_my_pickle(hair_table, "hair_table.pickle")
+
+    randTab = make_rand_talent_table()
+    print(randTab)
+    tickle_my_pickle(randTab, "RandTalent_table.pickle")
