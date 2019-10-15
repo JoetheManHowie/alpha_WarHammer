@@ -587,7 +587,7 @@ def GetAbScore(race):
 
 def GetClassTrappings(Class):
         trap = {'ACADEMICS': ['Clothing', 'Dagger', 'Pouch',
-                              'Sling Bag', 'Writing Kit', '1d10 sheets of Parchment'],
+                              'Sling Bag', 'Writing Kit', str(DiceSet().d10) +' sheets of Parchment'],
                 'BURGHERS':  ['Cloak', 'Clothing', 'Dagger',
                               'Hat', 'Pouch', 'Sling Bag', 'Lunch'],
                 'COURTIERS': ['Dagger', 'Fine Clothing',
@@ -599,7 +599,7 @@ def GetClassTrappings(Class):
                 'RIVERFOLK': ['Cloak', 'Clothing', 'Dagger',
                               'Pouch', 'Sling Bag', 'Flask of Spirits'],
                 'ROGUES':    ['Clothing', 'Dagger', 'Pouch',
-                              'Sling Bag', '2 Candles', '1d10 Matches', 'Hood or Mask'],
+                              'Sling Bag', '2 Candles', str(DiceSet().d10)+' Matches', 'Hood or Mask'],
                 'WARRIORS':  ['Clothing', 'Hand Weapon', 'Dagger', 'Pouch'] }
         return trap[Class]
 
