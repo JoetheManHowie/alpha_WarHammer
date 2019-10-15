@@ -2,10 +2,9 @@
 
 ## What we have
 
-This repository holds the code necessary to run a python script that out puts a random warhammer character with few steps left to compelte manually.
+This repository holds the code and csv data necessary to run a python script that out puts a random warhammer character with few steps left to compelte manually.
 
-The other piece of code needed for this to work is the class Dice.py
-And the five pickles.
+You will need to clone the repository to your local machine.
 
 ## Installation
 
@@ -19,9 +18,11 @@ You need to install the following as well:
 
 ## How to use this code
 
-- First download: Make_a_warhammer_PC.py, Dice.py, career_table.pickle, hair_table.pickle, classes_table.pickle , eye_table.pickle, RandTalent_table.pickle
-- Second: run the following command to generate a character `./Make_a_warhammer_PC.py --race='Wood Elf' --career='Witch Hunter' --pdf=myNewCharacter.pdf > myNewCharacter.txt`
-
+- First download all the file to one directory on your machine
+- Before you make your character run the following: `./pickle_WH_data.py`
+- you should now have five .pickle files in your repository.
+- Do the above once, then you are free to run the following to generate random characters.
+- `./Make_a_warhammer_PC.py --race='Wood Elf' --career='Witch Hunter' --pdf=myNewCharacter.pdf > myNewCharacter.txt`
 - the three arguments can be changed or left blank.
 - the last part of thr line saves the output to a txt file
 
