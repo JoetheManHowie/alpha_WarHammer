@@ -624,11 +624,11 @@ def GetRaceTalents(race):
                 while i < numRT:
                         d = DiceSet()
                         my_roll = d.d100
-                        print(my_roll)
+                        #print(my_roll)
                         for tal, nums in randTab.items():
                                 
                                 if my_roll in nums:
-                                        print(tal)
+                                        #print(tal)
                                         these_tal.append(tal)
                                 
                         
