@@ -2,7 +2,7 @@
 
 # Joe Howie, Updated Oct 12th, 2019
 # War Hammer fantasy 4ed Character Sheet Generator
-# ./Make_a_warhammer_PC.py --race='Wood Elf' --career='Witch Hunter' --pdf=myNewCharacter.pdf > myNewCharacter.txt
+# ./Make_a_warhammer_PC.py --race=Human --career='Witch Hunter' --pdf=myNewCharacter.pdf > myNewCharacter.txt
 
 import pdfrw                           
 import sys
@@ -622,18 +622,20 @@ def GetRaceTalents(race):
                 randTab = touch_my_pickle("RandTalent_table.pickle")
                 i=0
                 while i < numRT:
-                        d = DiceSet()
-                        my_roll = d.d100
+                        my_roll = DiceSet().d100
                         #print(my_roll)
+                        this_t = ''
                         for tal, nums in randTab.items():
-                                
                                 if my_roll in nums:
                                         #print(tal)
-                                        these_tal.append(tal)
+                                        this_t = tal
                                 
                         
+                        if tal in these_tal: continue
+                        these_tal.append(this_t)
                         i+=1
                 
+        
         return these_tal
 
         

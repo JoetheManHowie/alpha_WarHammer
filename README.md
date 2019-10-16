@@ -22,7 +22,7 @@ You need to install the following as well:
 - Before you make your character run the following: `./pickle_WH_data.py`
 - you should now have five .pickle files in your repository.
 - Do the above once, then you are free to run the following to generate random characters.
-- `./Make_a_warhammer_PC.py --race='Wood Elf' --career='Witch Hunter' --pdf=myNewCharacter.pdf > myNewCharacter.txt`
+- `./Make_a_warhammer_PC.py --race='Wood Elf' --career='Entertainer' --pdf=myNewCharacter.pdf > myNewCharacter.txt`
 - the three arguments can be changed or left blank.
 - the last part of thr line saves the output to a txt file
 
