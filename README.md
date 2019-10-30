@@ -32,7 +32,5 @@ The only parts left that you must do maually are explained in the txt file outpu
 ## What's Next:
 
 - Add the career data******
-- Convert code such that the pdf's:
-  	  - Autofill***
-	  - Can be leveled from pdf
+- Convert code such that the pdf's: Autofill***
 - Use django to add front end Interface (website,then app?)
