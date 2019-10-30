@@ -29,7 +29,10 @@ You need to install the following as well:
 The code will also output a fillable pdf of your character sheet that can be modified.
 The only parts left that you must do maually are explained in the txt file output.
 
+## What's Next:
 
-
-
-
+- Add the career data******
+- Convert code such that the pdf's:
+  	  - Autofill***
+	  - Can be leveled from pdf
+- Use django to add front end Interface (website,then app?)
