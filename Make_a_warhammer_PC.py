@@ -4,16 +4,46 @@
 # War Hammer fantasy 4ed Character Sheet Generator
 # ./Make_a_warhammer_PC.py --race=Human --career='Witch Hunter' --pdf=myNewCharacter.pdf > myNewCharacter.txt
 
+#import career_path as cp
+import numpy as np
 import pdfrw                           
 import sys
 import numpy as np
 import pandas as pd
-from Dice import DiceSet
+import random
+#from Dice import DiceSet
 from pickle import load
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfform
 from reportlab.lib.colors import white, black 
 
+## classes
+
+class DiceSet():
+        def __init__(self):
+                self.d4 = random.randint(1, 4)
+                self.d6 = random.randint(1, 6)
+                self.d8 = random.randint(1, 8)
+                self.d10 = random.randint(1, 10)
+                self.d12 = random.randint(1, 12)
+                self.d20 = random.randint(1, 20)
+                self.d100 = random.randint(1, 100) 
+
+
+class path():
+        def __init__(self, name, status, skills, talents, trappings, page):
+                self.name = name
+                self.status = status
+                self.skills = skills
+                self.talents = talents
+                self.trappings = trappings
+                self.page = page
+
+
+        def __str__(self):
+                return "On page "+ str(self.page)+"\n"+self.name+"--"+self.status 
+                        
+                
 def main():
         try:
                 args = sys.argv
@@ -39,41 +69,54 @@ def main():
                         Race = GetRace() 
                         myClass = GetMyClass(myJob)
 
+                ## The meat ##
                 myClass = GetMyClass(myJob)
                 abScore, ABS = GetAbScore(Race)
                 race_skills = GetRaceSkills(Race)
                 race_talents = GetRaceTalents(Race)
                 age, height, eye, hair = PhysicalFeatures(Race)
                 traps = GetClassTrappings(myClass)
-                
+                cp =  getCareerData(myClass, myJob)
+                cash = getMoney(cp.status)
                 #### Print results ####
                 
                 for args in (("RACE:", Race), ("CLASS:", myClass), ("CAREER:", myJob)):
                         print("{0:<10} {1:<10}".format(*args))
-                        
+
+                print("See page "+str(cp.page)+ " for more details")
                 print(pd.DataFrame.from_dict(abScore, orient = 'index'))
+
                 print("\nSKILLS:\t(Pick three with 3 pts Advance, and three with 5 pts Advance):")
                 [print("\t%s" %sk) for sk in race_skills ]
-                print("Go to your Career Path and Spend 40 pts Advance on your starting skills \n\
+                print("FROM CAREER: (you get 40 advances betwwen the eight, with a max of 10 in any one skill)")
+                [print("\t%s" %sk) for sk in cp.skills ]
+                '''print("Go to your Career Path and Spend 40 pts Advance on your starting skills \n\
 (Max 10pts per skill with these points) Note there is enough Advance \n\
-to put 5 pts in each skill in your starting class (which is required to level up)!\n")
+to put 5 pts in each skill in your starting class (which is required to level up)!\n")'''
+                
                 print("TALENTS: (Humans & Halfling, Random Talents are rolled for you):")
                 [print("\t%s" %ta) for ta in race_talents ]
+                print("FROM CAREER: (pick ONE)")
+                [print("\t%s" %ta) for ta in cp.talents ]
                 print("Note: if any doubles occurred, you may re-roll.\n\
-Go to your Career Path Take ONE talent from your starting career path.\n")
-                
-                
+Go to your Career Path Take ONE talent from your starting career path.")
+
+
                 print("Physical Features:")
                 for args in (("Age:", age), ("Height:", str(int(height))+" cm"), ("Eye Color:", eye), ("Hair Color:", hair)):
                         print("\t{0:<15} {1:<15}".format(*args))
                 
                 print("\nTrappings: (You also get the trappings from your career)")
                 [print('\t%s' %itm) for itm in traps]
+                
+                [print('\t%s' %itm) for itm in cp.trappings]
+                g, s, c = cash
+                print('You have: %d gold, %d silver, and %d copper' %(g, s, c))
+                
 
                 
-                
                 ### Create pdf ## needs to come last
-                create_simple_form(filename, Race, myClass, myJob, age, int(height), eye, hair, ABS, race_talents, traps)
+                getCharacterSheet(filename, Race, myClass, myJob, age, int(height), eye, hair, ABS, race_talents, traps, cp, cash)
                 return 0
 
 
@@ -83,9 +126,48 @@ Go to your Career Path Take ONE talent from your starting career path.\n")
                 exit()
 
                 
-                
 
-def create_simple_form(pdf, race, Class, job, age, height, eye, hair, ABS, talent, traps):
+                
+def binary_search(itm_list, itm):
+        first = 0
+        last = len(itm_list)-1
+        #print("$$$$$$$ BEGIN $$$$$$$")
+        while (first <= last ):#and found == False):
+                mid = (first + last)//2
+                #print(itm, itm_list[mid])
+                #print(itm_list[first: last+1])
+                #print("first = %d, last = %d, mid = %d" %(first, last, mid))
+                if (itm_list[mid] == itm):
+                        return True
+                else:
+                        if itm < itm_list[mid]:
+                                #print("itm <, change last")
+                                last = mid - 1
+                        else:
+                                #print('itm >=, change first')
+                                first = mid + 1
+                        
+                        #print("first = %d, last = %d, mid = %d" %(first, last, mid))
+
+
+        #print("$$$$$$$ END $$$$$$$\n")
+        return False
+
+
+def getMoney(status):
+        ''' returns a tuple with (gold, silver, copper)'''
+        cl, cn = status.split(' ')
+        cn = int(cn)
+        if (cl =="Brass"):
+                return (0, 0, sum([DiceSet().d10 for i in range(0, 2*cn)]))
+        elif (cl == 'Silver'):
+                return (0, sum([DiceSet().d10 for i in range(0, cn)]), 0)
+        else:
+                return (cn, 0, 0)
+        
+
+
+def getCharacterSheet(pdf, race, Class, job, age, height, eye, hair, ABS, talent, traps, cp, cash):
         c = canvas.Canvas(pdf)
         curry = 820
         c.setFont("Courier", 20)
@@ -118,18 +200,18 @@ def create_simple_form(pdf, race, Class, job, age, height, eye, hair, ABS, talen
         curry += 5
         c.drawString(260, curry, 'Career Level:')   
         curry -= 5
-        next_insert(form, 370, curry, 200, 20, '')
+        next_insert(form, 370, curry, 200, 20, "See page "+str(cp.page))
 
         # career path
         curry -=30
         c.drawString(10, curry, 'Career Path:')   
         curry -= 5
-        next_insert(form, 110, curry, 280, 20, '')
+        next_insert(form, 110, curry, 280, 20, cp.name)
         # status
         curry += 5
         c.drawString(410, curry, 'Status:')   
         curry -= 5
-        next_insert(form, 470, curry, 100, 20, '')
+        next_insert(form, 470, curry, 100, 20, cp.status)
 
         # Age
         curry -=30
@@ -217,7 +299,9 @@ def create_simple_form(pdf, race, Class, job, age, height, eye, hair, ABS, talen
         next_insert(form, 510, curry, 70, 20, '')
         # Movement
         curry -= 10
+        c.setFont('Courier', 14)
         c.drawString(360, curry, 'Movement:')
+        c.setFont('Courier', 12)
         curry -= 20
         c.drawString(270, curry, 'Movement:')
         curry -=5
@@ -230,7 +314,15 @@ def create_simple_form(pdf, race, Class, job, age, height, eye, hair, ABS, talen
         c.drawString(470, curry, 'Run:')
         curry -=5
         next_insert(form, 510, curry, 22, 20, str(4*int(ABS['Movement'])))
-        curry -=30
+
+        curry -=15
+        c.drawString(190, curry, 'Extra Points:')
+        curry -=5
+        next_insert(form, 290, curry, 15, 20, str(int(ABS['Extra Points'])))
+        curry += 5
+        curry -=15
+        #curry -=30
+
         # Basic Skills & Advanced Skills
         tbs = 15
         c.setFont("Courier", 14)
@@ -241,14 +333,14 @@ def create_simple_form(pdf, race, Class, job, age, height, eye, hair, ABS, talen
         c.drawString(10, curry, 'Name             | Charac. | Adv')
         c.drawString(310, curry, 'Name             | Charac. | Adv')
         #
-        sl = [('Art              | Dex     |', 'Dex'),
+        sl = (('Art              | Dex     |', 'Dex'),
               ('Athletics        | Ag      |', 'AG'),
               ('Bribery          | Fel     |', 'Fel'),
               ('Charm            | Fel     |', 'Fel'),
               ('Charm Animal     | WP      |', 'WP'),
               ('Climb            | S       |', 'S'),
-              ('Cool             | WP      |', 'WP'),
               ('Consume Alcohol  | T       |', 'T'),
+              ('Cool             | WP      |', 'WP'),
               ('Dodge            | Ag      |', 'AG'),
               ('Drive            | Ag      |', 'AG'),
               ('Endurance        | T       |', 'T'),
@@ -266,21 +358,48 @@ def create_simple_form(pdf, race, Class, job, age, height, eye, hair, ABS, talen
               ('Perception       | I       |', 'I'),
               ('Ride             | Ag      |', 'AG'),
               ('Row              | S       |', 'S'),
-              ('Stealth          | Ag      |', 'AG')]
+              ('Stealth          | Ag      |', 'AG'))
         blank= '                 |         |'
         curry -=5 
-        for sk, ab in sl:
+        # race skills
+        bas = []
+        ass = []
+        bs = 0
+        all_sk = [s.split("|")[0].rstrip() for s,_ in sl]
+        #print (all_sk)
+        for skill in cp.skills:
+                in_list = binary_search(all_sk, skill)
+                if (in_list):
+                        bas.append(skill)
+                else:
+                        ass.append(skill)
+        
+        #print(bas, ass)
+        for i in range(0, len(all_sk)):
+                sk, ab = sl[i]
                 curry -= tbs
                 c.drawString(10, curry, sk)
                 c.drawString(310, curry, blank)
                 curry -=5
-                next_insert(form, 180, curry, 22, 20, str(int(ABS[ab])))
-                next_insert(form, 217, curry, 22, 20, '')
+                in_list = binary_search(bas, all_sk[i])
+                if (in_list):
+                        next_insert(form, 180, curry, 22, 20, str(int(ABS[ab])))
+                        next_insert(form, 217, curry, 22, 20, '5')
+                else:
+                        next_insert(form, 180, curry, 22, 20, str(int(ABS[ab])))
+                        next_insert(form, 217, curry, 22, 20, '')
                 # advanced
-                next_insert(form, 310, curry, 120, 20, '')
-                next_insert(form, 442, curry, 35, 20, '')
-                next_insert(form, 482, curry, 22, 20, '')
-                next_insert(form, 517, curry, 22, 20, '')
+                if len(ass) >0:
+                        next_insert(form, 310, curry, 120, 20, ass[0])
+                        next_insert(form, 442, curry, 35, 20, '')
+                        next_insert(form, 482, curry, 22, 20, '')
+                        next_insert(form, 517, curry, 22, 20, '5')
+                        ass = ass[1:]
+                else:
+                        next_insert(form, 310, curry, 120, 20, '')
+                        next_insert(form, 442, curry, 35, 20, '')
+                        next_insert(form, 482, curry, 22, 20, '')
+                        next_insert(form, 517, curry, 22, 20, '')
         
 
         c.showPage()
@@ -298,6 +417,9 @@ def create_simple_form(pdf, race, Class, job, age, height, eye, hair, ABS, talen
         c.drawString(380, curry, 'Name                  | Enc')
         
         count = 0
+        # career talents
+        rtal = str(cp.talents)
+        talent.append(rtal)
         for ta in talent:
                 #print(ta)
                 curry -= tbs*2
@@ -307,6 +429,9 @@ def create_simple_form(pdf, race, Class, job, age, height, eye, hair, ABS, talen
                 count+=1
         curry +=tbs*2*count
         count2 = 0
+        # career trappings
+        traps = list(traps)
+        traps.extend(list(cp.trappings))
         for itm in traps:
                 #print(itm)
                 curry -= tbs*2
@@ -420,7 +545,7 @@ def create_simple_form(pdf, race, Class, job, age, height, eye, hair, ABS, talen
         c.showPage()
         
         ## Page 3
-        cash = ('| D:', '| SS:', '| GC:')
+        cash_d = ('| D:', '| SS:', '| GC:')
         space = ((70, 100), (130, 170), (200, 240))
         curry = 820
         c.setFont('Courier', 14)
@@ -428,9 +553,9 @@ def create_simple_form(pdf, race, Class, job, age, height, eye, hair, ABS, talen
         c.setFont('Courier', 12)
         i = 0
         for a, b in space:
-                c.drawString(a, curry, cash[i])
+                c.drawString(a, curry, cash_d[i])
                 curry -=5
-                next_insert(form, b, curry, 25, 20, '')
+                next_insert(form, b, curry, 25, 20, str(cash[i]))
                 curry +=5
                 i +=1
 
@@ -586,22 +711,1103 @@ def GetAbScore(race):
 
 
 def GetClassTrappings(Class):
-        trap = {'ACADEMICS': ['Clothing', 'Dagger', 'Pouch',
-                              'Sling Bag', 'Writing Kit', str(DiceSet().d10) +' sheets of Parchment'],
-                'BURGHERS':  ['Cloak', 'Clothing', 'Dagger',
-                              'Hat', 'Pouch', 'Sling Bag', 'Lunch'],
-                'COURTIERS': ['Dagger', 'Fine Clothing',
-                              'Pouch', 'Tweezers', 'Ear Pick', 'Comb'],
-                'PEASANTS':  ['Cloak', 'Clothing', 'Dagger',
-                              'Pouch', 'Sling Bag', 'Rations (1 day)'],
-                'RANGERS':   ['Cloak', 'Clothing', 'Dagger',
-                              'Pouch', 'Backpack', 'Tinderbox', 'Blanket', 'Rations (1 day)'],
-                'RIVERFOLK': ['Cloak', 'Clothing', 'Dagger',
-                              'Pouch', 'Sling Bag', 'Flask of Spirits'],
-                'ROGUES':    ['Clothing', 'Dagger', 'Pouch',
-                              'Sling Bag', '2 Candles', str(DiceSet().d10)+' Matches', 'Hood or Mask'],
-                'WARRIORS':  ['Clothing', 'Hand Weapon', 'Dagger', 'Pouch'] }
+        trap = {'ACADEMICS': ('Clothing', 'Dagger', 'Pouch',
+                              'Sling Bag', 'Writing Kit', str(DiceSet().d10) +' sheets of Parchment'),
+                'BURGHERS':  ('Cloak', 'Clothing', 'Dagger',
+                              'Hat', 'Pouch', 'Sling Bag', 'Lunch'),
+                'COURTIERS': ('Dagger', 'Fine Clothing',
+                              'Pouch', 'Tweezers', 'Ear Pick', 'Comb'),
+                'PEASANTS':  ('Cloak', 'Clothing', 'Dagger',
+                              'Pouch', 'Sling Bag', 'Rations (1 day)'),
+                'RANGERS':   ('Cloak', 'Clothing', 'Dagger',
+                              'Pouch', 'Backpack', 'Tinderbox', 'Blanket', 'Rations (1 day)'),
+                'RIVERFOLK': ('Cloak', 'Clothing', 'Dagger',
+                              'Pouch', 'Sling Bag', 'Flask of Spirits'),
+                'ROGUES':    ('Clothing', 'Dagger', 'Pouch',
+                              'Sling Bag', '2 Candles', str(DiceSet().d10)+' Matches', 'Hood or Mask'),
+                'WARRIORS':  ('Clothing', 'Hand Weapon', 'Dagger', 'Pouch') }
         return trap[Class]
+
+
+def getCareerData(Class, career):
+        Ca_path = {"ACADEMICS": {'Apothecary': path('Apothecary’s Apprentice',
+                                                    'Brass 3',
+                                                    ('Consume Alcohol',
+                                                     'Heal',
+                                                     'Language (Classical)',
+                                                     'Lore (Chemistry)',
+                                                     'Lore (Medicine)',
+                                                     'Lore (Plants)',
+                                                     'Trade (Apothecary)',
+                                                     'Trade (Poisoner)'),
+                                                    ('Concoct',
+                                                     'Craftsman (Apothecary)',
+                                                     'Etiquette (Scholar)',
+                                                     'Read/Write)'),
+                                                    ('Book (Blank)',
+                                                     'Healing Draught',
+                                                     'Leather Jerkin',
+                                                     'Pestle and Mortar'), 53),
+                                 'Engineer': path('Student Engineer',
+                                                  'Brass 4',
+                                                  ('Consume Alcohol',
+                                                   'Cool',
+                                                   'Endurance',
+                                                   'Language (Classical)',
+                                                   'Lore (Engineer)',
+                                                   'Perception',
+                                                   'Ranged (Blackpowder)',
+                                                   'Trade (Engineer)'),
+                                                  ('Artistic', 
+                                                   'Gunner',
+                                                   'Read/Write',
+                                                   'Tinker'),
+                                                  ('Book (Engineer)',
+                                                   'Hammer and Spikes'), 54),
+                                 'Lawyer': path('Student Lawyer',
+                                                'Brass 4',
+                                                ('Consume Alcohol',
+                                                 'Endurance',
+                                                 'Haggle',
+                                                 'Language (Classical)',
+                                                 'Lore (Law)',
+                                                 'Lore (Theology)',
+                                                 'Perception',
+                                                 'Research'),
+                                                ('Blather',
+                                                 'Etiquette (Scholar)',
+                                                 'Read/Write',
+                                                 'Speedreader'),
+                                                ('Book (Law)',
+                                                 'Magnifying Glass'), 55),
+                                 'Nun': path('Novitiate',
+                                             'Brass 1',
+                                             ('Art (Calligraphy)',
+                                              'Cool',
+                                              'Endurance',
+                                              'Entertain (Storyteller)',
+                                              'Gossip',
+                                              'Heal',
+                                              'Lore (Theology)',
+                                              'Pray'),
+                                             ('Bless (Any)',
+                                              'Stone Soup',
+                                              'Panhandle',
+                                              'Read/Write'),
+                                             ('Religious Symbol',
+                                              'Robes'), 56),
+                                 'Physician': path('Physician`s Apprentice',
+                                                   'Brass 4',
+                                                   ('Bribery',
+                                                    'Cool',
+                                                    'Drive',
+                                                    'Endurance',
+                                                    'Gossip',
+                                                    'Heal',
+                                                    'Perception',
+                                                    'Sleight of Hand'),
+                                                   ('Bookish',
+                                                    'Field Dressing',
+                                                    'Read/Write',
+                                                    'Strike to Stun'),
+                                                   ('Bandages',
+                                                    'Healing Draught'), 57),
+                                 'Priest': path('Initiate',
+                                                'Brass 2',
+                                                ('Athletics',
+                                                 'Cool',
+                                                 'Endurance',
+                                                 'Intuition',
+                                                 'Lore (Theology)',
+                                                 'Perception',
+                                                 'Pray',
+                                                 'Research'),
+                                                ('Bless (Any)',
+                                                 'Holy Visions',
+                                                 'Read/Write',
+                                                 'Suave'),
+                                                ('Religious Symbol',
+                                                 'Robes'), 58),
+                                 'Scholar': path('Student',
+                                                 'Brass 3',
+                                                 ('Consume Alcohol',
+                                                  'Entertain (Storytelling)',
+                                                  'Gamble',
+                                                  'Gossip',
+                                                  'Haggle',
+                                                  'Language (Classical)',
+                                                  'Lore (Any)',
+                                                  'Research'),
+                                                  ('Carouser',
+                                                   'Read/Write',
+                                                   'Savvy',
+                                                   'Super Numerate'),
+                                                 ('Alcohol',
+                                                  'Book',
+                                                  'Opinions',
+                                                  'Writing Kit'), 59),
+                                 'Wizard': path('Wizard`s Apprentice',
+                                                'Brass 3',
+                                                ('Channelling (Any Colour)',
+                                                 'Dodge',
+                                                 'Intuition',
+                                                 'Language (Magick)',
+                                                 'Lore (Magic)',
+                                                 'Melee (Basic)',
+                                                 'Melee (Polearm)',
+                                                 'Perception'),
+                                                ('Aethyric Attunement',
+                                                 'Petty Magic',
+                                                 'Read/Write',
+                                                 'Second Sight'),
+                                                ('Grimoire',
+                                                 'Quarterstaff'), 60) },
+                   "BURGHERS":  {'Agitator': path('Pamphleteer',
+                                                  'Brass 1',
+                                                  ('Art (Writing)',
+                                                   'Bribery',
+                                                   'Charm',
+                                                   'Consume Alcohol',
+                                                   'Gossip',
+                                                   'Haggle',
+                                                   'Lore (Politics)',
+                                                   'Trade (Printing)'),
+                                                  ('Blather',
+                                                   'Gregarious',
+                                                   'Panhandle',
+                                                   'Read/Write'),
+                                                  ('Writing Kit',
+                                                   'Hammer and Nails',
+                                                   'Pile of Leaflets'), 61),
+                                 'Artisan': path('Apprentice Artisan',
+                                                 'Brass 2',
+                                                 ('Athletics',
+                                                  'Cool',
+                                                  'Consume Alcohol',
+                                                  'Dodge',
+                                                  'Endurance',
+                                                  'Evaluate',
+                                                  'Stealth (Urban)',
+                                                  'Trade (Any)'),
+                                                 ('Artistic',
+                                                  'Craftsman (any)',
+                                                  'Strong Back',
+                                                  'Very Strong'),
+                                                 ('Chalk',
+                                                  'Leather Jerkin',
+                                                  str(DiceSet().d10)+' rags'), 62),
+                                 'Beggar': path('Pauper',
+                                                'Brass 0',
+                                                ('Athletics',
+                                                 'Charm',
+                                                 'Consume Alcohol',
+                                                 'Cool',
+                                                 'Dodge',
+                                                 'Endurance',
+                                                 'Intuition',
+                                                 'Stealth (Urban)'),
+                                                ('Panhandle',
+                                                 'Resistance (Disease)',
+                                                 'Stone Soup',
+                                                 'Very Resilient'),
+                                                ('Poor Quality Blanket', 'Cup'), 63),
+                                 'Investigator': path('Sleuth',
+                                                      'Silver 1',
+                                                      ('Charm',
+                                                       'Climb',
+                                                       'Cool',
+                                                       'Gossip',
+                                                       'Intuition',
+                                                       'Perception',
+                                                       'Stealth (Urban)',
+                                                       'Track'),
+                                                      ('Alley Cat',
+                                                       'Beneath Notice',
+                                                       'Read/Write',
+                                                       'Sharp'),
+                                                      ('Lantern',
+                                                       'Lamp Oil',
+                                                       'Journal',
+                                                       'Quill and Ink'), 64),
+                                 'Merchant': path('Trader',
+                                                  'Silver 2',
+                                                  ('Animal Care',
+                                                   'Bribery',
+                                                   'Charm',
+                                                   'Consume Alcohol',
+                                                   'Drive',
+                                                   'Gamble',
+                                                   'Gossip',
+                                                   'Haggle'),
+                                                  ('Blather',
+                                                   'Dealmaker',
+                                                   'Read/Write',
+                                                   'Suave'),
+                                                  ('Abacus',
+                                                   'Mule and Cart',
+                                                   'Canvas Tarpaulin',
+                                                   str(sum([DiceSet().d10 for i in range(0, 3)]))+' Silver Shillings'), 65),
+                                 'Rat Catcher': path('Rat Hunter',
+                                                     'Brass 3',
+                                                     ('Athletics',
+                                                      'Animal Training (Dog)',
+                                                      'Charm Animal',
+                                                      'Consume Alcohol',
+                                                      'Endurance',
+                                                      'Melee (Basic)',
+                                                      'Ranged (Sling)',
+                                                      'Stealth (Underground or Urban)'),
+                                                     ('Night Vision',
+                                                      'Resistance (Disease)',
+                                                      'Strike Mighty Blow',
+                                                      'Strike to Stun'),
+                                                     ('Sling with Ammunition',
+                                                      'Sack',
+                                                      'Small but Vicious Dog'), 66),
+                                 'Townsman': path('Clerk',
+                                                  'Silver 1',
+                                                  ('Charm',
+                                                   'Climb',
+                                                   'Consume Alcohol',
+                                                   'Drive',
+                                                   'Dodge',
+                                                   'Gamble',
+                                                   'Gossip',
+                                                   'Haggle'),
+                                                   ('Alley Cat',
+                                                    'Beneath Notice',
+                                                    'Etiquette (Servants)',
+                                                    'Sturdy'),
+                                                  ('Lodgings',
+                                                   'Sturdy Boots'), 67),
+                                 'Watchman': path('Watch Recruit',
+                                                  'Brass 3',
+                                                  ('Athletics',
+                                                   'Climb',
+                                                   'Consume Alcohol',
+                                                   'Dodge',
+                                                   'Endurance',
+                                                   'Gamble',
+                                                   'Melee (Any)',
+                                                   'Perception'),
+                                                  ('Drilled',
+                                                   'Hardy',
+                                                   'Strike to Stun',
+                                                   'Tenacious'),
+                                                  ('Hand Weapon',
+                                                   'Leather Jack',
+                                                   'Uniform'), 68)},
+                   "COURTIERS": {'Advisor': path('Aide',
+                                                 'Silver 2',
+                                                 ('Bribery',
+                                                  'Consume Alcohol',
+                                                  'Endurance',
+                                                  'Gossip',
+                                                  'Haggle',
+                                                  'Language (Classical)',
+                                                  'Lore (Politics)',
+                                                  'Perception'),
+                                                 ('Beneath Notice', 
+                                                  'Etiquette (Any)',
+                                                  'Gregarious',
+                                                  'Read/Write'),
+                                                 ('Writing Kit',), 69),
+                                 'Artist': path('Apprentice Artist',
+                                                'Silver 1',
+                                                ('Art (Any)',
+                                                 'Cool',
+                                                 'Consume Alcohol',
+                                                 'Evaluate',
+                                                 'Endurance',
+                                                 'Gossip',
+                                                 'Perception',
+                                                 'Stealth (Urban)'),
+                                                ('Artistic',
+                                                 'Sharp',
+                                                 'Strong Back',
+                                                 'Tenacious'),
+                                                ('Brush or Chisel or Quill Pen',), 70),
+                                 'Duellist': path('Fencer',
+                                                  'Silver 3',
+                                                  ('Athletics',
+                                                   'Dodge',
+                                                   'Endurance',
+                                                   'Heal',
+                                                   'Intuition',
+                                                   'Language (Classical)',
+                                                   'Melee (Any)',
+                                                   'Perception'),
+                                                  ('Beat Blade',
+                                                   'Distract',
+                                                   'Feint',
+                                                   'Step Aside'),
+                                                  ('Hand Weapon or Rapier',
+                                                   'Sling Bag containing Clothing', 
+                                                   str(DiceSet().d10)+' Bandages'), 71),
+                                 'Envoy': path('Herald',
+                                               'Silver 2',
+                                               ('Athletics',
+                                                'Charm',
+                                                'Drive',
+                                                'Dodge',
+                                                'Endurance',
+                                                'Intuition',
+                                                'Ride (Horse)',
+                                                'Row'),
+                                               ('Blather',
+                                                'Etiquette (Nobles)',
+                                                'Read/Write',
+                                                'Suave'),
+                                               ('Leather Jack',
+                                                'Livery',
+                                                'Scroll Case'), 72),
+                                 'Noble': path('Scion',
+                                               'Gold 1',
+                                               ('Bribery',
+                                                'Consume Alcohol',
+                                                'Gamble',
+                                                'Intimidate',
+                                                'Leadership',
+                                                'Lore (Heraldry)',
+                                                'Melee (Fencing)',
+                                                'Play (Any)'),
+                                               ('Etiquette (Nobles)',
+                                                'Luck',
+                                                'Noble Blood',
+                                                'Read/Write'),
+                                               ('Courtly Garb',
+                                                'Foil or Hand Mirror',
+                                                'Jewellery worth '+ str(sum([DiceSet().d10 for i in range(0, 3)])) +' gc',
+                                                'Personal Servant'), 73 ),
+                                 'Servant': path('Menial',
+                                                 'Silver 1',
+                                                 ('Athletics',
+                                                  'Climb',
+                                                  'Drive',
+                                                  'Dodge',
+                                                  'Endurance',
+                                                  'Intuition',
+                                                  'Perception',
+                                                  'Stealth (Any)'),
+                                                 ('Beneath Notice',
+                                                  'Strong Back',
+                                                  'Strong-minded',
+                                                  'Sturdy'),
+                                                 ('Floor Brush', ), 74),
+                                 'Spy': path('Informer',
+                                             'Brass 3',
+                                             ('Bribery',
+                                              'Charm',
+                                              'Cool',
+                                              'Gamble',
+                                              'Gossip',
+                                              'Haggle',
+                                              'Perception',
+                                              'Stealth (Any)'),
+                                             ('Blather',
+                                              'Carouser',
+                                              'Gregarious',
+                                              'Shadow'),
+                                             ('Charcoal stick',
+                                              'Sling Bag containing 2 different sets of clothing',
+                                              'Hooded Cloak'), 75),
+                                 'Warden': path('Custodian',
+                                                'Silver 1',
+                                                ('Athletics',
+                                                 'Charm Animal',
+                                                 'Consume Alcohol',
+                                                 'Cool',
+                                                 'Endurance',
+                                                 'Intuition',
+                                                 'Lore (Local)',
+                                                 'Perception'),
+                                                ('Menacing',
+                                                 'Night Vision',
+                                                 'Sharp',
+                                                 'Strike to Stun'),
+                                                ('Keys',
+                                                 'Lantern',
+                                                 'Lamp Oil',
+                                                 'Livery'), 76)},
+                   "PEASANTS":  {'Bailiff': path('Tax Collector',
+                                                 'Silver 1',
+                                                 ('Cool',
+                                                  'Dodge',
+                                                  'Endurance',
+                                                  'Gossip',
+                                                  'Haggle',
+                                                  'Intimidate',
+                                                  'Melee (Basic)',
+                                                  'Perception'),
+                                                 ('Embezzle',
+                                                  'Numismatics',
+                                                  'Strong Back',
+                                                  'Tenacious'),
+                                                 ('Hand weapon',
+                                                  'small lock box'), 77),
+                                 'Hedge Witch': path('Hedge Apprentice',
+                                                     'Brass 1',
+                                                     ('Channelling',
+                                                      'Endurance',
+                                                      'Intuition',
+                                                      'Language (Magick)',
+                                                      'Lore (Folklore)',
+                                                      'Lore (Herbs)',
+                                                      'Outdoor Survival',
+                                                      'Perception'),
+                                                     ('Fast Hands',
+                                                      'Petty Magic',
+                                                      'Rover',
+                                                      'Strider (Woodlands)'),
+                                                     (str(DiceSet().d10)+' Lucky Charms',
+                                                      'Quarterstaff',
+                                                      'Backpack'), 78),
+                                 'Herbalist': path('Herb Gatherer',
+                                                   'Brass 2',
+                                                   ('Charm Animal',
+                                                    'Climb',
+                                                    'Endurance',
+                                                    'Lore (Herbs)',
+                                                    'Outdoor Survival',
+                                                    'Perception',
+                                                    'Swim',
+                                                    'Trade (Herbalist)'),
+                                                   ('Acute Sense (Taste)',
+                                                    'Orientation',
+                                                    'Rover',
+                                                    'Strider (any)'),
+                                                   ('Boots',
+                                                    'Cloak',
+                                                    'Sling Bag containing Assortment of Herbs'), 79),
+                                 'Hunter': path('Trapper',
+                                                'Brass 2',
+                                                ('Charm Animal',
+                                                 'Climb',
+                                                 'Endurance',
+                                                 'Lore (Beasts)',
+                                                 'Outdoor Survival',
+                                                 'Perception',
+                                                 'Ranged (Sling)',
+                                                 'Set Trap'),
+                                                ('Hardy',
+                                                 'Rover',
+                                                 'Strider (any)',
+                                                 'Trapper'),
+                                                ('Selection of Animal Traps',
+                                                 'Hand Weapon',
+                                                 'Sling with 10 Stone Bullets',
+                                                 'Sturdy Boots and Cloak'), 80),
+                                 'Miner': path('Prospector',
+                                               'Brass 2',
+                                               ('Cool',
+                                                'Endurance',
+                                                'Intuition',
+                                                'Lore (Local)',
+                                                'Melee (Two-handed)',
+                                                'Outdoor Survival',
+                                                'Perception',
+                                                'Swim'),
+                                               ('Rover',
+                                                'Strider (Rocky)',
+                                                'Sturdy',
+                                                'Tenacious'),
+                                               ('Charcoal Stick',
+                                                'Crude Map',
+                                                'Pan',
+                                                'Spade'), 81),
+                                 'Mystic': path('Fortune Teller',
+                                                'Brass 1',
+                                                ('Charm',
+                                                 'Entertain (Fortune Telling)',
+                                                 'Dodge',
+                                                 'Gossip',
+                                                 'Haggle',
+                                                 'Intuition',
+                                                 'Perception',
+                                                 'Sleight of Hand'),
+                                                ('Attractive',
+                                                 'Luck',
+                                                 'Second Sight',
+                                                 'Suave'),
+                                                ('Deck of Cards or Dice',
+                                                 'Cheap Jewellery'), 82),
+                                 'Scout': path('Guide',
+                                               'Brass 3',
+                                               ('Charm Animal',
+                                                'Climb',
+                                                'Endurance',
+                                                'Gossip',
+                                                'Lore (Local)',
+                                                'Melee (Basic)',
+                                                'Outdoor Survival',
+                                                'Perception'),
+                                               ('Orientation',
+                                                'Rover',
+                                                'Sharp',
+                                                'Strider (any)'),
+                                               ('Hand Weapon',
+                                                'Leather Jack',
+                                                'Sturdy Boots and Cloak',
+                                                'Rope'), 83),
+                                 'Villager': path('Peasant',
+                                                  'Brass 2',
+                                                  ('Animal Care',
+                                                   'Athletics',
+                                                   'Consume Alcohol',
+                                                   'Endurance',
+                                                   'Gossip',
+                                                   'Melee (Brawling)',
+                                                   'Lore (Local)',
+                                                   'Outdoor Survival'),
+                                                  ('Rover',
+                                                   'Strong Back',
+                                                   'Strong-minded',
+                                                   'Stone Soup'),
+                                                  (), 84)},
+                   "RANGERS":   {'Bounty Hunter': path('Thief-taker',
+                                                       'Silver 1',
+                                                       ('Bribery',
+                                                        'Charm',
+                                                        'Gossip',
+                                                        'Haggle',
+                                                        'Intuition',
+                                                        'Melee (Basic)',
+                                                        'Outdoor Survival',
+                                                        'Perception'),
+                                                       ('Break and Enter',
+                                                        'Shadow',
+                                                        'Strike to Stun',
+                                                        'Suave'),
+                                                       ('Hand Weapon',
+                                                        'Leather Jerkin',
+                                                        'Rope'), 85),
+                                 'Coachman': path('Postilion',
+                                                  'Silver 1',
+                                                  ('Animal Care',
+                                                   'Charm Animal',
+                                                   'Climb',
+                                                   'Drive',
+                                                   'Endurance',
+                                                   'Perception',
+                                                   'Ranged (Entangling)',
+                                                   'Ride (Horse)'),
+                                                  ('Animal Affinity',
+                                                   'Seasoned Traveller',
+                                                   'Trick-Riding',
+                                                   'Tenacious'),
+                                                  ('Warm Coat and Gloves',
+                                                   'Whip'), 86),
+                                 'Entertainer': path('Busker',
+                                                     'Brass 3',
+                                                     ('Athletics',
+                                                      'Charm',
+                                                      'Entertain (Any)',
+                                                      'Gossip',
+                                                      'Haggle',
+                                                      'Perform (Any)',
+                                                      'Play (any)',
+                                                      'Sleight of Hand'),
+                                                     ('Attractive',
+                                                      'Mimic',
+                                                      'Public-Speaking',
+                                                      'Suave'),
+                                                     ('Bowl',
+                                                      'Instrument'), 87),
+                                 'Flagellant': path('Zealot',
+                                                    'Brass 0',
+                                                    ('Dodge',
+                                                     'Endurance',
+                                                     'Heal',
+                                                     'Intimidate',
+                                                     'Intuition',
+                                                     'Lore (Sigmar)',
+                                                     'Melee (Flail)',
+                                                     'Outdoor Survival'),
+                                                    ('Berserk Charge',
+                                                     'Frenzy',
+                                                     'Read/Write',
+                                                     'Stone Soup'),
+                                                    ('Flail',
+                                                     'Tattered Robes'), 88),
+                                 'Messenger': path('Runner',
+                                                   'Brass 3',
+                                                   ('Athletics',
+                                                    'Climb',
+                                                    'Dodge',
+                                                    'Endurance',
+                                                    'Gossip',
+                                                    'Navigation',
+                                                    'Perception',
+                                                    'Melee (Brawling)'),
+                                                   ('Flee!',
+                                                    'Fleet Footed',
+                                                    'Sprinter',
+                                                    'Step Aside'),
+                                                   ('Scroll Case',), 89),
+                                 'Pedlar': path('Vagabond',
+                                                'Brass 1',
+                                                ('Charm',
+                                                 'Endurance',
+                                                 'Entertain (Storytelling)',
+                                                 'Gossip',
+                                                 'Haggle',
+                                                 'Intuition',
+                                                 'Outdoor Survival',
+                                                 'Stealth (Rural or Urban)'),
+                                                ('Fisherman',
+                                                 'Flee!',
+                                                 'Rover',
+                                                 'Tinker'),
+                                                ('Backpack',
+                                                 'Bedroll',
+                                                 'Goods worth '+str(sum([DiceSet().d10 for i in range(0, 3)]))+' Brass',
+                                                 'Tent'), 90),
+                                 'Road Warden': path('Toll Keeper',
+                                                     'Brass 5',
+                                                     ('Bribery',
+                                                      'Consume Alcohol',
+                                                      'Gamble',
+                                                      'Gossip',
+                                                      'Haggle',
+                                                      'Melee (Basic)',
+                                                      'Perception',
+                                                      'Ranged (Crossbow)'),
+                                                     ('Coolheaded',
+                                                      'Embezzle',
+                                                      'Marksman',
+                                                      'Numismatics'),
+                                                     ('Crossbow with 10 Bolts',
+                                                      'Leather Jack'), 91),
+                                 'Witch Hunter': path('Interrogator',
+                                                      'Silver 1',
+                                                      ('Charm',
+                                                       'Consume Alcohol',
+                                                       'Heal',
+                                                       'Intimidate',
+                                                       'Intuition',
+                                                       'Lore (Torture)',
+                                                       'Melee (Brawling)',
+                                                       'Perception'),
+                                                      ('Coolheaded',
+                                                       'Menacing',
+                                                       'Read/Write',
+                                                       'Resolute'),
+                                                      ('Hand Weapon',
+                                                       'Instruments of Torture'), 92)},
+                   "RIVERFOLK": {'Boatman': path('Boat-hand',
+                                                 'Silver 1',
+                                                 ('Consume Alcohol',
+                                                  'Dodge',
+                                                  'Endurance',
+                                                  'Gossip',
+                                                  'Melee (Brawling)',
+                                                  'Row',
+                                                  'Sail',
+                                                  'Swim'),
+                                                 ('Dirty Fighting',
+                                                  'Fisherman',
+                                                  'Strong Back',
+                                                  'Strong',
+                                                  'Swimmer'),
+                                                 ('Hand Weapon (Boat Hook)',
+                                                  'Leather Jack',
+                                                  'Pole'), 93),
+                                 'Huffer': path('Riverguide',
+                                                'Brass 4',
+                                                ('Consume Alcohol',
+                                                 'Gossip',
+                                                 'Intuition',
+                                                 'Lore (Local)',
+                                                 'Lore (Riverways)',
+                                                 'Perception',
+                                                 'Row',
+                                                 'Swim'),
+                                                ('Fisherman',
+                                                 'Night Vision', 
+                                                 'Orientation',
+                                                 'Waterman'),
+                                                ('Hand Weapon (Boat Hook)',
+                                                 'Storm Lantern and Oil)'), 94),
+                                 'Riverwarden': path('River Recruit',
+                                                     'Silver 1',
+                                                     ('Athletics',
+                                                      'Dodge',
+                                                      'Endurance',
+                                                      'Melee (Basic)',
+                                                      'Perception',
+                                                      'Row',
+                                                      'Sail',
+                                                      'Swim'),
+                                                     ('Strong Swimmer',
+                                                      'Strong Back',
+                                                      'Very Strong',
+                                                      'Waterman'),
+                                                     ('Hand Weapon (Sword)',
+                                                      'Leather Jack',
+                                                      'Uniform'), 95), 
+                                 'Riverwoman': path('Greenfish',
+                                                    'Brass 2',
+                                                    ('Athletics',
+                                                     'Consume Alcohol',
+                                                     'Dodge',
+                                                     'Endurance',
+                                                     'Gossip',
+                                                     'Outdoor Survival',
+                                                     'Row',
+                                                     'Swim'),
+                                                    ('Fisherman',
+                                                     'Gregarious',
+                                                     'Strider (Marshes)',
+                                                     'Strong Swimmer'),
+                                                    ('Bucket',
+                                                     'Fishing Rod and Bait',
+                                                     'Leather Leggings'), 96),
+                                 'Seaman': path('Landsman',
+                                                'Silver 1',
+                                                ('Climb',
+                                                 'Consume Alcohol',
+                                                 'Gamble',
+                                                 'Gossip',
+                                                 'Row',
+                                                 'Melee (Brawling)',
+                                                 'Sail',
+                                                 'Swim'),
+                                                ('Fisherman',
+                                                 'Strider (Coastal)',
+                                                 'Strong Back',
+                                                 'Strong Swimmer'),
+                                                ('Bucket',
+                                                 'Brush',
+                                                 'Mop'), 97),
+                                 'Smuggler': path('River Runner',
+                                                  'Brass 2',
+                                                  ('Athletics',
+                                                   'Bribery',
+                                                   'Cool',
+                                                   'Consume Alcohol',
+                                                   'Row',
+                                                   'Sail',
+                                                   'Stealth (Rural or Urban)',
+                                                   'Swim'),
+                                                  ('Criminal',
+                                                   'Fisherman',
+                                                   'Strider (Marshes)',
+                                                   'Strong Back'),
+                                                   ('Large Sack',
+                                                    'Mask or Scarves',
+                                                    'Tinderbox',
+                                                    'Storm Lantern and Oil'), 98),
+                                 'Stevedore': path('Dockhand',
+                                                   'Brass 3',
+                                                   ('Athletics',
+                                                    'Climb',
+                                                    'Consume Alcohol',
+                                                    'Dodge',
+                                                    'Endurance',
+                                                    'Gossip',
+                                                    'Melee (Basic)',
+                                                    'Swim'),
+                                                   ('Dirty Fighting',
+                                                    'Strong Back',
+                                                    'Sturdy',
+                                                    'Very Strong'),
+                                                   ('Hand Weapon (Boat Hook)',
+                                                    'Leather Gloves'), 99),
+                                 'Wrecker': path('Cargo Scavenger',
+                                                 'Brass 2',
+                                                 ('Climb',
+                                                  'Consume Alcohol',
+                                                  'Dodge',
+                                                  'Endurance',
+                                                  'Row',
+                                                  'Melee (Basic)',
+                                                  'Outdoor Survival',
+                                                  'Swim'),
+                                                 ('Break and Enter',
+                                                  'Criminal',
+                                                  'Fisherman',
+                                                  'Strong Back'),
+                                                 ('Crowbar',
+                                                  'Large Sack',
+                                                  'Leather Gloves'), 100)},
+                   "ROGUES":    {'Bawd': path('Hustler',
+                                              'Brass 1',
+                                              ('Bribery',
+                                               'Charm',
+                                               'Consume Alcohol',
+                                               'Entertain (Any)',
+                                               'Gamble',
+                                               'Gossip',
+                                               'Haggle',
+                                               'Intimidate'),
+                                              ('Attractive',
+                                               'Alley Cat',
+                                               'Blather',
+                                               'Gregarious'),
+                                              ('Flask of Spirits', ), 101), 
+                                 'Charlatan': path('Swindler',
+                                                   'Brass 3',
+                                                   ('Bribery',
+                                                    'Consume Alcohol',
+                                                    'Charm',
+                                                    'Entertain (Storytelling)',
+                                                    'Gamble',
+                                                    'Gossip',
+                                                    'Haggle',
+                                                    'Sleight of Hand'),
+                                                    ('Cardsharp',
+                                                     'Diceman',
+                                                     'Etiquette (Any)',
+                                                     'Luck'),
+                                                    ('Backpack',
+                                                     '2 Sets of Clothing',
+                                                     'Deck of Cards',
+                                                     'Dice'), 102),
+                                 'Fence': path('Broker',
+                                               'Silver 1',
+                                               ('Charm',
+                                                'Consume Alcohol',
+                                                'Dodge',
+                                                'Evaluate',
+                                                'Gamble',
+                                                'Gossip',
+                                                'Haggle',
+                                                'Melee (Basic)'),
+                                               ('Alley Cat',
+                                                'Cardsharp',
+                                                'Dealmaker',
+                                                'Gregarious'),
+                                               ('Hand Weapon',
+                                                'Stolen Goods worth '+str(sum([DiceSet().d10 for i in range(0, 3)]))+' Shillings'), 103),
+                                 'Grave Robber': path('Body Snatcher',
+                                                      'Brass 2',
+                                                      ('Climb',
+                                                       'Cool',
+                                                       'Dodge',
+                                                       'Endurance',
+                                                       'Gossip',
+                                                       'Intuition',
+                                                       'Perception',
+                                                       'Stealth (Any)'),
+                                                      ('Alley Cat',
+                                                       'Criminal',
+                                                       'Flee!',
+                                                       'Strong Back'),
+                                                      ('Crowbar',
+                                                       'Handcart',
+                                                       'Hooded Cloak',
+                                                       'Tarpaulin'), 104),
+                                 'Outlaw': path('Brigand',
+                                                'Brass 1',
+                                                ('Athletics',
+                                                 'Consume Alcohol',
+                                                 'Cool',
+                                                 'Endurance',
+                                                 'Gamble',
+                                                 'Intimidate',
+                                                 'Melee (Basic)',
+                                                 'Outdoor Survival'),
+                                                ('Combat Aware',
+                                                 'Criminal',
+                                                 'Rover',
+                                                 'Flee!'),
+                                                ('Bedroll',
+                                                 'Hand Weapon',
+                                                 'Leather Jerkin',
+                                                 'Tinderbox'), 105),
+                                 'Racketeer': path('Thug',
+                                                   'Brass 3',
+                                                   ('Consume Alcohol',
+                                                    'Cool',
+                                                    'Dodge',
+                                                    'Endurance',
+                                                    'Intimidate',
+                                                    'Lore (Local)',
+                                                    'Melee (Brawling)',
+                                                    'Stealth (Urban)'),
+                                                   ('Criminal',
+                                                    'Etiquette (Criminals)',
+                                                    'Menacing',
+                                                    'Strike Mighty Blow'),
+                                                   ('Knuckledusters',
+                                                    'Leather Jack'), 106),
+                                 'Thief': path('Prowler',
+                                               'Brass 1',
+                                               ('Athletics',
+                                                'Climb',
+                                                'Cool',
+                                                'Dodge',
+                                                'Endurance',
+                                                'Intuition',
+                                                'Perception',
+                                                'Stealth (Urban)'),
+                                               ('Alley Cat',
+                                                'Criminal',
+                                                'Flee!',
+                                                'Strike to Stun'),
+                                               ('Crowbar',
+                                                'Leather Jerkin',
+                                                'Sack'), 107),
+                                'Witch': path('Hexer',
+                                              'Brass 1',
+                                              ('Channelling',
+                                               'Cool',
+                                               'Endurance',
+                                               'Gossip',
+                                               'Intimidate',
+                                               'Language (Magick)',
+                                               'Sleight of Hand',
+                                               'Stealth (Rural)'),
+                                              ('Criminal',
+                                               'Instinctive Diction',
+                                               'Menacing',
+                                               'Petty Magic'),
+                                              ('Candles',
+                                               'Chalk',
+                                               'Doll',
+                                               'Pins'), 108)},
+                "WARRIORS":    {'Cavalryman': path('Horseman',
+                                                   'Silver 2',
+                                                   ('Animal Care',
+                                                    'Charm Animal',
+                                                    'Endurance',
+                                                    'Language (Battle)',
+                                                    'Melee (Basic)',
+                                                    'Outdoor Survival',
+                                                    'Perception',
+                                                    'Ride (Horse)'),
+                                                   ('Combat Aware',
+                                                    'Crack the Whip',
+                                                    'Lightning Reflexes',
+                                                    'Roughrider'),
+                                                   ('Leather Jack',
+                                                    'Riding Horse with Saddle and Tack'), 109),
+                                'Guard': path('Sentry',
+                                              'Silver 1',
+                                              ('Consume Alcohol',
+                                               'Endurance',
+                                               'Entertain (Storytelling)',
+                                               'Gamble',
+                                               'Gossip',
+                                               'Intuition',
+                                               'Melee (Basic)',
+                                               'Perception'),
+                                              ('Diceman',
+                                               'Etiquette (Servants)',
+                                               'Strike to Stun',
+                                               'Tenacious'),
+                                              ('Buckler',
+                                               'Leather Jerkin',
+                                               'Storm Lantern with Oil'), 110),
+                                'Knight': path('Squire',
+                                               'Silver 3',
+                                               ('Athletics',
+                                                'Animal Care',
+                                                'Charm Animal',
+                                                'Heal',
+                                                'Lore (Heraldry)',
+                                                'Melee (Cavalry)',
+                                                'Ride (Horse)',
+                                                'Trade (Farrier)'),
+                                               ('Etiquette (any)',
+                                                'Roughrider',
+                                                'Sturdy',
+                                                'Warrior Born'),
+                                               ('Leather Jack',
+                                                'Mail Shirt',
+                                                'Riding Horse with Saddle and Tack',
+                                                'Shield, Trade Tools (Farrier)'), 111),
+                                'Pit Fighter': path('Pugilist',
+                                                    'Brass 4',
+                                                    ('Athletics',
+                                                     'Cool',
+                                                     'Dodge',
+                                                     'Endurance',
+                                                     'Gamble',
+                                                     'Intimidate',
+                                                     'Melee (Any)',
+                                                     'Melee (Brawling)'),
+                                                     ('Dirty Fighting',
+                                                      'In-fighter',
+                                                      'Iron Jaw',
+                                                      'Reversal'),
+                                                    ('Bandages',
+                                                     'Knuckledusters',
+                                                     'Leather Jack'), 112),
+                                'Protagonist': path('Braggart',
+                                                    'Brass 2',
+                                                    ('Athletics',
+                                                     'Dodge',
+                                                     'Endurance',
+                                                     'Entertain (Taunt)',
+                                                     'Gossip',
+                                                     'Haggle',
+                                                     'Intimidate',
+                                                     'Melee (Any)'),
+                                                    ('In-fighter',
+                                                     'Dirty Fighting',
+                                                     'Menacing',
+                                                     'Warrior Born'),
+                                                    ('Hood or Mask',
+                                                     'Knuckledusters',
+                                                     'Leather Jack'), 113),
+                                'Slayer': path('Troll Slayer',
+                                                'Brass 2',
+                                                ('Consume Alcohol',
+                                                 'Cool',
+                                                 'Dodge,'
+                                                 'Endurance',
+                                                 'Gamble',
+                                                 'Heal',
+                                                 'Lore (Trolls)',
+                                                 'Melee (Basic)'),
+                                                ('Dual Wielder',
+                                                 'Fearless (Everything)',
+                                                 'Frenzy',
+                                                 'Slayer'),
+                                                ('Axe',
+                                                 'Flask of Spirits',
+                                                 'Shame',
+                                                 'Tattoos'), 114),
+                                'Soldier': path('Recruit',
+                                                'Silver 1',
+                                                ('Athletics',
+                                                 'Climb',
+                                                 'Cool',
+                                                 'Dodge',
+                                                 'Endurance',
+                                                 'Language (Battle)',
+                                                 'Melee (Basic)',
+                                                 'Play (Drum or Fife)'),
+                                                ('Diceman',
+                                                 'Marksman',
+                                                 'Strong Back',
+                                                 'Warrior Born'),
+                                                ('Dagger',
+                                                 'Leather Breastplate',
+                                                 'Uniform'), 115),
+                                'Warrior Priest': path('Novitiate',
+                                                       'Brass 2',
+                                                       ('Cool',
+                                                        'Dodge',
+                                                        'Endurance',
+                                                        'Heal',
+                                                        'Leadership',
+                                                        'Lore (Theology)',
+                                                        'Melee (Any)',
+                                                        'Pray'),
+                                                       ('Bless (Any)',
+                                                        'Etiquette (Cultists)',
+                                                        'Read/Write',
+                                                        'Strong-minded'),
+                                                       ('Book (Religion)',
+                                                        'Leather Jerkin',
+                                                        'Religious Symbol',
+                                                        'Robes',
+                                                        'Weapon (Any Melee)'), 116)}}
+
+        
+        return Ca_path[Class][career]
 
 
 def GetRaceTalents(race):
@@ -640,21 +1846,21 @@ def GetRaceTalents(race):
 
         
 def GetRaceSkills(race):
-        race_skill = {"Human":    ['Animal Care', 'Charm, Cool', 'Evaluate', 'Gossip', 'Haggle',
+        race_skill = {"Human":    ('Animal Care', 'Charm, Cool', 'Evaluate', 'Gossip', 'Haggle',
                                    'Language (Bretonnian)', 'Language (Wastelander)', 'Leadership',
-                                   'Lore (Reikland)', 'Melee (Basic)', 'Ranged (Bow)'],
-                      "Dwarf":    ['Consume Alcohol', 'Cool', 'Endurance', 'Entertain (Storytelling)',
+                                   'Lore (Reikland)', 'Melee (Basic)', 'Ranged (Bow)'),
+                      "Dwarf":    ('Consume Alcohol', 'Cool', 'Endurance', 'Entertain (Storytelling)',
                                    'Evaluate', 'Intimidate', 'Language (Khazalid)', 'Lore (Dwarfs)',
-                                   'Lore (Geology)', 'Lore (Metallurgy)', 'Melee (Basic)', 'Trade (any one)'], 
-                      "Halfling": ['Charm', 'Consume Alcohol', 'Dodge', 'Gamble', 'Haggle',
+                                   'Lore (Geology)', 'Lore (Metallurgy)', 'Melee (Basic)', 'Trade (any one)'), 
+                      "Halfling": ('Charm', 'Consume Alcohol', 'Dodge', 'Gamble', 'Haggle',
                                    'Intuition', 'Language (Mootish)', 'Lore (Reikland)', 'Perception',
-                                   'Sleight of Hand', 'Stealth (Any)', 'Trade (Cook)' ],
-                      "High Elf": ['Cool', 'Entertain (Sing)', 'Evaluate', 'Language (Eltharin)',
+                                   'Sleight of Hand', 'Stealth (Any)', 'Trade (Cook)' ),
+                      "High Elf": ('Cool', 'Entertain (Sing)', 'Evaluate', 'Language (Eltharin)',
                                    'Leadership', 'Melee (Basic)', 'Navigation', 'Perception',
-                                   'Play (anyone)', 'Ranged (Bow)', 'Sail', 'Swim'],
-                      "Wood Elf": ['Athletics', 'Climb', 'Endurance', 'Entertain (Sing)',
+                                   'Play (anyone)', 'Ranged (Bow)', 'Sail', 'Swim'),
+                      "Wood Elf": ('Athletics', 'Climb', 'Endurance', 'Entertain (Sing)',
                                    'Intimidate', 'Language (Eltharin)', 'Melee (Basic)', 'Outdoor'
-                                   'Survival', 'Perception', 'Ranged (Bow)', 'Stealth (Rural)', 'Track'] }
+                                   'Survival', 'Perception', 'Ranged (Bow)', 'Stealth (Rural)', 'Track') }
         return race_skill[race]
 
 
