@@ -2,23 +2,26 @@
 
 # Joe Howie, Updated Oct 12th, 2019
 # War Hammer fantasy 4ed Character Sheet Generator
+
+# ./Make_a_warhammer_PC.py --race= --career= --pdf=
+
+# pdf default name: out.pdf
+
 # ./Make_a_warhammer_PC.py --race=Human --career='Witch Hunter' --pdf=myNewCharacter.pdf > myNewCharacter.txt
 
-#import career_path as cp
 import numpy as np
 import pdfrw                           
 import sys
 import numpy as np
 import pandas as pd
 import random
-#from Dice import DiceSet
 from pickle import load
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfform
 from reportlab.lib.colors import white, black 
 
 ## classes
-
+#from Dice import DiceSet
 class DiceSet():
         def __init__(self):
                 self.d4 = random.randint(1, 4)
@@ -74,10 +77,10 @@ def main():
                 abScore, ABS = GetAbScore(Race)
                 race_skills = GetRaceSkills(Race)
                 race_talents = GetRaceTalents(Race)
-                age, height, eye, hair = PhysicalFeatures(Race)
+                age, height, eye, hair = GetPhysicalFeatures(Race)
                 traps = GetClassTrappings(myClass)
-                cp =  getCareerData(myClass, myJob)
-                cash = getMoney(cp.status)
+                cp =  GetCareerData(myClass, myJob)
+                cash = GetMoney(cp.status)
                 #### Print results ####
                 
                 for args in (("RACE:", Race), ("CLASS:", myClass), ("CAREER:", myJob)):
@@ -131,14 +134,17 @@ Go to your Career Path Take ONE talent from your starting career path.")
 def binary_search(itm_list, itm):
         first = 0
         last = len(itm_list)-1
+        found = False
         #print("$$$$$$$ BEGIN $$$$$$$")
-        while (first <= last ):#and found == False):
+        while (first <= last and found == False):
                 mid = (first + last)//2
-                #print(itm, itm_list[mid])
-                #print(itm_list[first: last+1])
-                #print("first = %d, last = %d, mid = %d" %(first, last, mid))
+                '''
+                print(itm, itm_list[mid])
+                print(itm_list[first: last+1])
+                print("first = %d, last = %d, mid = %d" %(first, last, mid))
+                '''                
                 if (itm_list[mid] == itm):
-                        return True
+                        found = True
                 else:
                         if itm < itm_list[mid]:
                                 #print("itm <, change last")
@@ -147,14 +153,14 @@ def binary_search(itm_list, itm):
                                 #print('itm >=, change first')
                                 first = mid + 1
                         
-                        #print("first = %d, last = %d, mid = %d" %(first, last, mid))
+                #print("first = %d, last = %d, mid = %d" %(first, last, mid))
 
 
-        #print("$$$$$$$ END $$$$$$$\n")
-        return False
+        # print("$$$$$$$ END $$$$$$$\n")
+        return found
 
 
-def getMoney(status):
+def GetMoney(status):
         ''' returns a tuple with (gold, silver, copper)'''
         cl, cn = status.split(' ')
         cn = int(cn)
@@ -428,10 +434,62 @@ def getCharacterSheet(pdf, race, Class, job, age, height, eye, hair, ABS, talent
                 next_insert(form, 200, curry, 175, 20, '')
                 count+=1
         curry +=tbs*2*count
-        count2 = 0
+
+        # pull out these item for later
+        armour = ['Leather Breastplate',
+                  'Leather Gloves',
+                  'Leather Jack',
+                  'Leather Jerkin',
+                  'Leather Leggings']
+                  
+        weapons = ['Axe',
+                   'Dagger',
+                   'Flail',
+                   'Knuckledusters',
+                   'Mail Shirt',
+                   'Hand Weapon',
+                   'Hand Weapon (Boat Hook)',
+                   'Hand Weapon or Rapier',
+                   'Hand Weapon (Sword)',
+                   'Shield',
+                   'Weapon (Any Melee)']
+
         # career trappings
+        count2 = 0
         traps = list(traps)
         traps.extend(list(cp.trappings))
+        traps.sort()
+        any_a = []
+        any_w = []
+        #print(traps)
+        #print(weapons)
+        while len(weapons) > 0:
+                itm = weapons[0]
+                '''
+                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+itm)
+                print(traps)        
+                '''                
+                in_weapons = binary_search(traps, itm)
+                if in_weapons:
+                        traps.remove(itm)
+                        any_w.append(itm)
+
+                weapons = weapons[1:]
+                #print(traps)        
+
+        while len(armour) > 0:
+                itm = armour[0]
+                '''
+                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+itm)
+                print(traps)        
+                '''
+                in_armor = binary_search(traps, itm)
+                if in_armor:
+                        traps.remove(itm)
+                        any_a.append(itm)
+                armour = armour[1:]
+                #print(traps)        
+                
         for itm in traps:
                 #print(itm)
                 curry -= tbs*2
@@ -489,7 +547,17 @@ def getCharacterSheet(pdf, race, Class, job, age, height, eye, hair, ABS, talent
         curry -= 20
         c.setFont('Courier', 12)
         c.drawString(10, curry, 'Name                 | Location | Enc | AP | Qualities')
-        for i in range(0, 6):
+        left = len(any_a)
+        while len(any_a) != 0:
+                curry -= 25        
+                next_insert(form, 10, curry, 150, 20, any_a[0])
+                next_insert(form, 177, curry, 55, 20, '')
+                next_insert(form, 252, curry, 25, 20, '')
+                next_insert(form, 290, curry, 30, 20, '')
+                next_insert(form, 330, curry, 250, 20, '')
+                any_a = any_a[1:]
+        
+        for i in range(left, 6):
                 curry -= 25
                 next_insert(form, 10, curry, 150, 20, '')
                 next_insert(form, 177, curry, 55, 20, '')
@@ -533,7 +601,19 @@ def getCharacterSheet(pdf, race, Class, job, age, height, eye, hair, ABS, talent
         curry -= 20
         c.setFont('Courier', 12)
         c.drawString(10, curry, 'Name                 | Group | Enc | R/R | Danage | Qualities')
-        for i in range(0, 6):
+        #print(any_w)
+        left = len(any_w)
+        while len(any_w) != 0:
+                curry -= 25
+                next_insert(form, 10, curry, 150, 20, any_w[0])
+                next_insert(form, 169, curry, 50, 20, '')
+                next_insert(form, 233, curry, 25, 20, '')
+                next_insert(form, 267, curry, 40, 20, '')
+                next_insert(form, 313, curry, 60, 20, '')
+                next_insert(form, 377, curry, 213, 20, '')
+                any_w = any_w[1:]
+                
+        for i in range(left, 6):
                 curry -= 25
                 next_insert(form, 10, curry, 150, 20, '')
                 next_insert(form, 169, curry, 50, 20, '')
@@ -729,7 +809,7 @@ def GetClassTrappings(Class):
         return trap[Class]
 
 
-def getCareerData(Class, career):
+def GetCareerData(Class, career):
         Ca_path = {"ACADEMICS": {'Apothecary': path('Apothecary’s Apprentice',
                                                     'Brass 3',
                                                     ('Consume Alcohol',
@@ -910,7 +990,8 @@ def getCareerData(Class, career):
                                                  'Resistance (Disease)',
                                                  'Stone Soup',
                                                  'Very Resilient'),
-                                                ('Poor Quality Blanket', 'Cup'), 63),
+                                                ('Poor Quality Blanket',
+                                                 'Cup'), 63),
                                  'Investigator': path('Sleuth',
                                                       'Silver 1',
                                                       ('Charm',
@@ -1143,7 +1224,7 @@ def getCareerData(Class, career):
                                                   'Numismatics',
                                                   'Strong Back',
                                                   'Tenacious'),
-                                                 ('Hand weapon',
+                                                 ('Hand Weapon',
                                                   'small lock box'), 77),
                                  'Hedge Witch': path('Hedge Apprentice',
                                                      'Brass 1',
@@ -1716,7 +1797,8 @@ def getCareerData(Class, career):
                                                ('Leather Jack',
                                                 'Mail Shirt',
                                                 'Riding Horse with Saddle and Tack',
-                                                'Shield, Trade Tools (Farrier)'), 111),
+                                                'Shield',
+                                                'Trade Tools (Farrier)'), 111),
                                 'Pit Fighter': path('Pugilist',
                                                     'Brass 4',
                                                     ('Athletics',
@@ -1864,7 +1946,7 @@ def GetRaceSkills(race):
         return race_skill[race]
 
 
-def PhysicalFeatures(race):
+def GetPhysicalFeatures(race):
         eye_table = touch_my_pickle("eye_table.pickle")
         eye_roll = DiceSet().d10 + DiceSet().d10
         eye_color = ''
