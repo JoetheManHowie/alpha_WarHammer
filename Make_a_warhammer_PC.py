@@ -2,12 +2,13 @@
 
 # Joe Howie, Updated Oct 12th, 2019
 # War Hammer fantasy 4ed Character Sheet Generator
+#######  Example  ############
+# ./Make_a_warhammer_PC.py --race= --career= --filename=
+# pdf & txt default name: out.pdf & out.txt
 
-# ./Make_a_warhammer_PC.py --race= --career= --pdf=
-
-# pdf default name: out.pdf
-
-# ./Make_a_warhammer_PC.py --race=Human --career='Witch Hunter' --pdf=myNewCharacter.pdf > myNewCharacter.txt
+# ./Make_a_warhammer_PC.py --race=Human --career='Witch Hunter' --filename=myNewCharacter
+# pdf & txt named: myNewCharacter.pdf & myNewCharacter.txt
+#####################################
 
 import numpy as np
 import pdfrw                           
@@ -20,19 +21,7 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfform
 from reportlab.lib.colors import white, black 
 
-## classes
-#from Dice import DiceSet
-class DiceSet():
-        def __init__(self):
-                self.d4 = random.randint(1, 4)
-                self.d6 = random.randint(1, 6)
-                self.d8 = random.randint(1, 8)
-                self.d10 = random.randint(1, 10)
-                self.d12 = random.randint(1, 12)
-                self.d20 = random.randint(1, 20)
-                self.d100 = random.randint(1, 100) 
-
-
+## class
 class path():
         def __init__(self, name, status, skills, talents, trappings, page):
                 self.name = name
@@ -48,6 +37,8 @@ class path():
                         
                 
 def main():
+        '''Main calls to create character
+        and where the txt file is made'''
         try:
                 args = sys.argv
                 Race = args[1][7:]
@@ -55,11 +46,17 @@ def main():
                 abScore = ''
                 myJob = args[2][9:]
                 #print(myJob)
-                filename = args[3][6:]
+                filename = args[3][11:]
+                textfile = args[3][11:]
                 myClass = ''
                 thres = 3
                 if len(filename) < thres:
                         filename = 'out.pdf'
+                        textfile = 'out.txt'
+                else:
+                        filename = filename+".pdf"
+                        textfile = textfile+".pdf"
+                        
                 if len(Race) < thres and len(myJob) < thres:
                         #print('no race or career')
                         Race = GetRace()
@@ -81,42 +78,43 @@ def main():
                 traps = GetClassTrappings(myClass)
                 cp =  GetCareerData(myClass, myJob)
                 cash = GetMoney(cp.status)
-                #### Print results ####
+                #### Print results to textfile ####
+                txt = open(textfile,'w')
                 
                 for args in (("RACE:", Race), ("CLASS:", myClass), ("CAREER:", myJob)):
-                        print("{0:<10} {1:<10}".format(*args))
+                        txt.write("{0:<10} {1:<10}\n".format(*args))
 
-                print("See page "+str(cp.page)+ " for more details")
-                print(pd.DataFrame.from_dict(abScore, orient = 'index'))
+                txt.write("See page "+str(cp.page)+ " for more details\n")
+                txt.write(str(pd.DataFrame.from_dict(abScore, orient = 'index')))
 
-                print("\nSKILLS:\t(Pick three with 3 pts Advance, and three with 5 pts Advance):")
-                [print("\t%s" %sk) for sk in race_skills ]
-                print("FROM CAREER: (you get 40 advances betwwen the eight, with a max of 10 in any one skill)")
-                [print("\t%s" %sk) for sk in cp.skills ]
-                '''print("Go to your Career Path and Spend 40 pts Advance on your starting skills \n\
+                txt.write("\n\nSKILLS:\t(Pick three with 3 pts Advance, and three with 5 pts Advance):\n")
+                [txt.write("\t%s\n" %sk) for sk in race_skills ]
+                txt.write("FROM CAREER: (you get 40 advances betwwen the eight, with a max of 10 in any one skill)\n")
+                [txt.write("\t%s\n" %sk) for sk in cp.skills ]
+                '''txt.write("Go to your Career Path and Spend 40 pts Advance on your starting skills \n\
 (Max 10pts per skill with these points) Note there is enough Advance \n\
 to put 5 pts in each skill in your starting class (which is required to level up)!\n")'''
                 
-                print("TALENTS: (Humans & Halfling, Random Talents are rolled for you):")
-                [print("\t%s" %ta) for ta in race_talents ]
-                print("FROM CAREER: (pick ONE)")
-                [print("\t%s" %ta) for ta in cp.talents ]
-                print("Note: if any doubles occurred, you may re-roll.\n\
-Go to your Career Path Take ONE talent from your starting career path.")
+                txt.write("TALENTS: (Humans & Halfling, Random Talents are rolled for you):\n")
+                [txt.write("\t%s\n" %ta) for ta in race_talents ]
+                txt.write("FROM CAREER: (pick ONE)\n")
+                [txt.write("\t%s\n" %ta) for ta in cp.talents ]
+                txt.write("Note: if any doubles occurred, you may re-roll.\n\
+Go to your Career Path Take ONE talent from your starting career path.\n")
 
 
-                print("Physical Features:")
+                txt.write("Physical Features:\n")
                 for args in (("Age:", age), ("Height:", str(int(height))+" cm"), ("Eye Color:", eye), ("Hair Color:", hair)):
-                        print("\t{0:<15} {1:<15}".format(*args))
+                        txt.write("\t{0:<15} {1:<15}\n".format(*args))
                 
-                print("\nTrappings: (You also get the trappings from your career)")
-                [print('\t%s' %itm) for itm in traps]
+                txt.write("\nTrappings: (You also get the trappings from your career)\n")
+                [txt.write('\t%s\n' %itm) for itm in traps]
                 
-                [print('\t%s' %itm) for itm in cp.trappings]
+                [txt.write('\t%s\n' %itm) for itm in cp.trappings]
                 g, s, c = cash
-                print('You have: %d gold, %d silver, and %d copper' %(g, s, c))
+                txt.write('You have: %d gold, %d silver, and %d copper\n' %(g, s, c))
                 
-
+                txt.close()
                 
                 ### Create pdf ## needs to come last
                 getCharacterSheet(filename, Race, myClass, myJob, age, int(height), eye, hair, ABS, race_talents, traps, cp, cash)
@@ -128,7 +126,12 @@ Go to your Career Path Take ONE talent from your starting career path.")
                 print("If you want random race and/or career leave it blank:\n./Make_a_warhammer_PC.py --race= --career=")
                 exit()
 
+
+
                 
+
+def D(n):
+        return random.randint(1, n)
 
                 
 def binary_search(itm_list, itm):
@@ -165,9 +168,9 @@ def GetMoney(status):
         cl, cn = status.split(' ')
         cn = int(cn)
         if (cl =="Brass"):
-                return (0, 0, sum([DiceSet().d10 for i in range(0, 2*cn)]))
+                return (0, 0, sum([D(10) for i in range(0, 2*cn)]))
         elif (cl == 'Silver'):
-                return (0, sum([DiceSet().d10 for i in range(0, cn)]), 0)
+                return (0, sum([D(10) for i in range(0, cn)]), 0)
         else:
                 return (cn, 0, 0)
         
@@ -686,8 +689,7 @@ def next_insert(form, xpos, ypos, wbox, hbox, val):
         
         
 def GetRace():
-        d = DiceSet()
-        race_roll = d.d100
+        race_roll = D(100)
         # print('race roll = ' +str(race_roll))
         if race_roll < 91:
                 return 'Human'
@@ -720,8 +722,7 @@ def GetAJob(race):
         master_map = touch_my_pickle("career_table.pickle")
         career_class = touch_my_pickle("classes_table.pickle")
         # TIME TO ROLL
-        d = DiceSet()
-        roll = d.d100
+        roll = D(100)
         # print("career roll = " +str(roll))
         my_possible_careers = master_map[race]
         for career, nums in my_possible_careers.items():
@@ -763,9 +764,8 @@ def GetAbScore(race):
         absNums = {}
         count = 0
         for mod in options[race]:
-                d = DiceSet()
-                e = DiceSet()
-                r1 = e.d10; r2 = d.d10
+                r1 = D(10)
+                r2 = D(10)
                 absNums[AB[count]] = r1+r2+mod
                 your_abScore[AB[count]] = "2d10 + mod = %2d + %2d + %2d = %2d" %(r1, r2, mod, absNums[AB[count]])
                 
@@ -792,7 +792,7 @@ def GetAbScore(race):
 
 def GetClassTrappings(Class):
         trap = {'ACADEMICS': ('Clothing', 'Dagger', 'Pouch',
-                              'Sling Bag', 'Writing Kit', str(DiceSet().d10) +' sheets of Parchment'),
+                              'Sling Bag', 'Writing Kit', str(D(10)) +' sheets of Parchment'),
                 'BURGHERS':  ('Cloak', 'Clothing', 'Dagger',
                               'Hat', 'Pouch', 'Sling Bag', 'Lunch'),
                 'COURTIERS': ('Dagger', 'Fine Clothing',
@@ -804,7 +804,7 @@ def GetClassTrappings(Class):
                 'RIVERFOLK': ('Cloak', 'Clothing', 'Dagger',
                               'Pouch', 'Sling Bag', 'Flask of Spirits'),
                 'ROGUES':    ('Clothing', 'Dagger', 'Pouch',
-                              'Sling Bag', '2 Candles', str(DiceSet().d10)+' Matches', 'Hood or Mask'),
+                              'Sling Bag', '2 Candles', str(D(10))+' Matches', 'Hood or Mask'),
                 'WARRIORS':  ('Clothing', 'Hand Weapon', 'Dagger', 'Pouch') }
         return trap[Class]
 
@@ -975,7 +975,7 @@ def GetCareerData(Class, career):
                                                   'Very Strong'),
                                                  ('Chalk',
                                                   'Leather Jerkin',
-                                                  str(DiceSet().d10)+' rags'), 62),
+                                                  str(D(10))+' rags'), 62),
                                  'Beggar': path('Pauper',
                                                 'Brass 0',
                                                 ('Athletics',
@@ -1027,7 +1027,7 @@ def GetCareerData(Class, career):
                                                   ('Abacus',
                                                    'Mule and Cart',
                                                    'Canvas Tarpaulin',
-                                                   str(sum([DiceSet().d10 for i in range(0, 3)]))+' Silver Shillings'), 65),
+                                                   str(sum([D(10) for i in range(0, 3)]))+' Silver Shillings'), 65),
                                  'Rat Catcher': path('Rat Hunter',
                                                      'Brass 3',
                                                      ('Athletics',
@@ -1124,7 +1124,7 @@ def GetCareerData(Class, career):
                                                    'Step Aside'),
                                                   ('Hand Weapon or Rapier',
                                                    'Sling Bag containing Clothing', 
-                                                   str(DiceSet().d10)+' Bandages'), 71),
+                                                   str(D(10))+' Bandages'), 71),
                                  'Envoy': path('Herald',
                                                'Silver 2',
                                                ('Athletics',
@@ -1158,7 +1158,7 @@ def GetCareerData(Class, career):
                                                 'Read/Write'),
                                                ('Courtly Garb',
                                                 'Foil or Hand Mirror',
-                                                'Jewellery worth '+ str(sum([DiceSet().d10 for i in range(0, 3)])) +' gc',
+                                                'Jewellery worth '+ str(sum([D(10) for i in range(0, 3)])) +' gc',
                                                 'Personal Servant'), 73 ),
                                  'Servant': path('Menial',
                                                  'Silver 1',
@@ -1240,7 +1240,7 @@ def GetCareerData(Class, career):
                                                       'Petty Magic',
                                                       'Rover',
                                                       'Strider (Woodlands)'),
-                                                     (str(DiceSet().d10)+' Lucky Charms',
+                                                     (str(D(10))+' Lucky Charms',
                                                       'Quarterstaff',
                                                       'Backpack'), 78),
                                  'Herbalist': path('Herb Gatherer',
@@ -1441,7 +1441,7 @@ def GetCareerData(Class, career):
                                                  'Tinker'),
                                                 ('Backpack',
                                                  'Bedroll',
-                                                 'Goods worth '+str(sum([DiceSet().d10 for i in range(0, 3)]))+' Brass',
+                                                 'Goods worth '+str(sum([D(10) for i in range(0, 3)]))+' Brass',
                                                  'Tent'), 90),
                                  'Road Warden': path('Toll Keeper',
                                                      'Brass 5',
@@ -1659,7 +1659,7 @@ def GetCareerData(Class, career):
                                                 'Dealmaker',
                                                 'Gregarious'),
                                                ('Hand Weapon',
-                                                'Stolen Goods worth '+str(sum([DiceSet().d10 for i in range(0, 3)]))+' Shillings'), 103),
+                                                'Stolen Goods worth '+str(sum([D(10) for i in range(0, 3)]))+' Shillings'), 103),
                                  'Grave Robber': path('Body Snatcher',
                                                       'Brass 2',
                                                       ('Climb',
@@ -1910,16 +1910,15 @@ def GetRaceTalents(race):
                 randTab = touch_my_pickle("RandTalent_table.pickle")
                 i=0
                 while i < numRT:
-                        my_roll = DiceSet().d100
-                        #print(my_roll)
+                        my_roll = D(100)
+                        #print(my_roll, i)
                         this_t = ''
                         for tal, nums in randTab.items():
                                 if my_roll in nums:
-                                        #print(tal)
                                         this_t = tal
                                 
-                        
-                        if tal in these_tal: continue
+                        #print(this_t)
+                        if this_t in these_tal: continue
                         these_tal.append(this_t)
                         i+=1
                 
@@ -1948,7 +1947,7 @@ def GetRaceSkills(race):
 
 def GetPhysicalFeatures(race):
         eye_table = touch_my_pickle("eye_table.pickle")
-        eye_roll = DiceSet().d10 + DiceSet().d10
+        eye_roll = D(10) + D(10)
         eye_color = ''
         for color, nums in eye_table[race].items():
                 if eye_roll in nums:
@@ -1956,7 +1955,7 @@ def GetPhysicalFeatures(race):
                 
         
         hair_table = touch_my_pickle("hair_table.pickle")
-        hair_roll = DiceSet().d10 + DiceSet().d10
+        hair_roll = D(10) + D(10)
         hair_color = ''
         for color, nums in hair_table[race].items():
                 if hair_roll in nums:
@@ -1966,17 +1965,17 @@ def GetPhysicalFeatures(race):
         age = 0;
         height = 0;
         if race == 'Human':
-                age = 15 + DiceSet().d10
-                height = 2.54*(4*12 + 9 + sum([DiceSet().d10 for i in range(0, 2)])) 
+                age = 15 + D(10)
+                height = 2.54*(4*12 + 9 + sum([D(10) for i in range(0, 2)])) 
         elif race == "Dwarf":
-                age = 15 + sum([DiceSet().d10 for i in range(0, 10)])
-                height = 2.54*(4*12 + 3 + DiceSet().d10) 
+                age = 15 + sum([D(10) for i in range(0, 10)])
+                height = 2.54*(4*12 + 3 + D(10)) 
         elif race == "Halfling":
-                age = 15 + sum([DiceSet().d10 for i in range(0, 5)])
-                height = 2.54*(3*12 +1 + DiceSet().d10) 
+                age = 15 + sum([D(10) for i in range(0, 5)])
+                height = 2.54*(3*12 +1 + D(10)) 
         else:
-                age = 30 + sum([DiceSet().d10 for i in range(0, 10)])
-                height = 2.54*(5*12+11+ DiceSet().d10) 
+                age = 30 + sum([D(10) for i in range(0, 10)])
+                height = 2.54*(5*12+11+ D(10)) 
                 
         return (age, height, eye_color, hair_color)
 
