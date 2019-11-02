@@ -35,97 +35,105 @@ class path():
         def __str__(self):
                 return "On page "+ str(self.page)+"\n"+self.name+"--"+self.status 
                         
-                
+
+class armor():
+        def __init__(self, loc, enc, ap, qual):
+                self.loc = loc
+                self.enc = enc
+                self.qual = qual
+        
+
+
 def main():
         '''Main calls to create character
         and where the txt file is made'''
-        try:
-                args = sys.argv
-                Race = args[1][7:]
-                #print(Race)
-                abScore = ''
-                myJob = args[2][9:]
-                #print(myJob)
-                filename = args[3][11:]
-                textfile = args[3][11:]
-                myClass = ''
-                thres = 3
-                if len(filename) < thres:
-                        filename = 'out.pdf'
-                        textfile = 'out.txt'
-                else:
-                        filename = filename+".pdf"
-                        textfile = textfile+".pdf"
-                        
-                if len(Race) < thres and len(myJob) < thres:
-                        #print('no race or career')
-                        Race = GetRace()
-                        myJob, myClass = GetAJob(Race)
-                elif len(myJob)<thres and len(Race)>thres:
-                        #print('race but no job')
-                        myJob, myClass = GetAJob(Race)
-                elif len(Race)<thres and len(myJob)>thres:
-                        #print('job but no race')
-                        Race = GetRace() 
-                        myClass = GetMyClass(myJob)
-
-                ## The meat ##
-                myClass = GetMyClass(myJob)
-                abScore, ABS = GetAbScore(Race)
-                race_skills = GetRaceSkills(Race)
-                race_talents = GetRaceTalents(Race)
-                age, height, eye, hair = GetPhysicalFeatures(Race)
-                traps = GetClassTrappings(myClass)
-                cp =  GetCareerData(myClass, myJob)
-                cash = GetMoney(cp.status)
-                #### Print results to textfile ####
-                txt = open(textfile,'w')
+        #try:
+        args = sys.argv
+        Race = args[1][7:]
+        #print(Race)
+        abScore = ''
+        myJob = args[2][9:]
+        #print(myJob)
+        filename = args[3][11:]
+        textfile = args[3][11:]
+        myClass = ''
+        thres = 3
+        if len(filename) < thres:
+                filename = 'out.pdf'
+                textfile = 'out.txt'
+        else:
+                filename = filename+".pdf"
+                textfile = textfile+".pdf"
                 
-                for args in (("RACE:", Race), ("CLASS:", myClass), ("CAREER:", myJob)):
-                        txt.write("{0:<10} {1:<10}\n".format(*args))
-
-                txt.write("See page "+str(cp.page)+ " for more details\n")
-                txt.write(str(pd.DataFrame.from_dict(abScore, orient = 'index')))
-
-                txt.write("\n\nSKILLS:\t(Pick three with 3 pts Advance, and three with 5 pts Advance):\n")
-                [txt.write("\t%s\n" %sk) for sk in race_skills ]
-                txt.write("FROM CAREER: (you get 40 advances betwwen the eight, with a max of 10 in any one skill)\n")
-                [txt.write("\t%s\n" %sk) for sk in cp.skills ]
-                '''txt.write("Go to your Career Path and Spend 40 pts Advance on your starting skills \n\
+        if len(Race) < thres and len(myJob) < thres:
+                #print('no race or career')
+                Race = GetRace()
+                myJob, myClass = GetAJob(Race)
+        elif len(myJob)<thres and len(Race)>thres:
+                #print('race but no job')
+                myJob, myClass = GetAJob(Race)
+        elif len(Race)<thres and len(myJob)>thres:
+                #print('job but no race')
+                Race = GetRace() 
+                myClass = GetMyClass(myJob)
+                
+        ## The meat ##
+        myClass = GetMyClass(myJob)
+        abScore, ABS = GetAbScore(Race)
+        race_skills = GetRaceSkills(Race)
+        race_talents = GetRaceTalents(Race)
+        age, height, eye, hair = GetPhysicalFeatures(Race)
+        traps = GetClassTrappings(myClass)
+        cp =  GetCareerData(myClass, myJob)
+        cash = GetMoney(cp.status)
+        #### Print results to textfile ####
+        txt = open(textfile,'w')
+        
+        for args in (("RACE:", Race), ("CLASS:", myClass), ("CAREER:", myJob)):
+                txt.write("{0:<10} {1:<10}\n".format(*args))
+                
+        txt.write("See page "+str(cp.page)+ " for more details\n")
+        txt.write(str(pd.DataFrame.from_dict(abScore, orient = 'index')))
+        
+        txt.write("\n\nSKILLS:\t(Pick three with 3 pts Advance, and three with 5 pts Advance):\n")
+        [txt.write("\t%s\n" %sk) for sk in race_skills ]
+        txt.write("FROM CAREER: (you get 40 advances betwwen the eight, with a max of 10 in any one skill)\n")
+        [txt.write("\t%s\n" %sk) for sk in cp.skills ]
+        '''txt.write("Go to your Career Path and Spend 40 pts Advance on your starting skills \n\
 (Max 10pts per skill with these points) Note there is enough Advance \n\
 to put 5 pts in each skill in your starting class (which is required to level up)!\n")'''
-                
-                txt.write("TALENTS: (Humans & Halfling, Random Talents are rolled for you):\n")
-                [txt.write("\t%s\n" %ta) for ta in race_talents ]
-                txt.write("FROM CAREER: (pick ONE)\n")
-                [txt.write("\t%s\n" %ta) for ta in cp.talents ]
-                txt.write("Note: if any doubles occurred, you may re-roll.\n\
+
+        txt.write("TALENTS: (Humans & Halfling, Random Talents are rolled for you):\n")
+        [txt.write("\t%s\n" %ta) for ta in race_talents ]
+        txt.write("FROM CAREER: (pick ONE)\n")
+        [txt.write("\t%s\n" %ta) for ta in cp.talents ]
+        txt.write("Note: if any doubles occurred, you may re-roll.\n\
 Go to your Career Path Take ONE talent from your starting career path.\n")
-
-
-                txt.write("Physical Features:\n")
-                for args in (("Age:", age), ("Height:", str(int(height))+" cm"), ("Eye Color:", eye), ("Hair Color:", hair)):
-                        txt.write("\t{0:<15} {1:<15}\n".format(*args))
+        
+        
+        txt.write("Physical Features:\n")
+        for args in (("Age:", age), ("Height:", str(int(height))+" cm"), ("Eye Color:", eye), ("Hair Color:", hair)):
+                txt.write("\t{0:<15} {1:<15}\n".format(*args))
                 
-                txt.write("\nTrappings: (You also get the trappings from your career)\n")
-                [txt.write('\t%s\n' %itm) for itm in traps]
-                
-                [txt.write('\t%s\n' %itm) for itm in cp.trappings]
-                g, s, c = cash
-                txt.write('You have: %d gold, %d silver, and %d copper\n' %(g, s, c))
-                
-                txt.close()
-                
-                ### Create pdf ## needs to come last
-                getCharacterSheet(filename, Race, myClass, myJob, age, int(height), eye, hair, ABS, race_talents, traps, cp, cash)
-                return 0
+        txt.write("\nTrappings: (You also get the trappings from your career)\n")
+        [txt.write('\t%s\n' %itm) for itm in traps]
+        
+        [txt.write('\t%s\n' %itm) for itm in cp.trappings]
+        g, s, c = cash
+        txt.write('You have: %d gold, %d silver, and %d copper\n' %(g, s, c))
+        
+        txt.close()
+        
+        ### Create pdf ## needs to come last
+        getCharacterSheet(filename, Race, myClass, myJob, age, int(height), eye, hair, ABS, race_talents, traps, cp, cash)
+        return 0
 
-
+'''
         except KeyError:
                 print("Incorrect input, must be in the form:\n./Make_a_warhammer_PC.py --race='Dwarf' --career='Miner'")
                 print("If you want random race and/or career leave it blank:\n./Make_a_warhammer_PC.py --race= --career=")
                 exit()
-
+'''
 
 
                 
@@ -440,22 +448,37 @@ def getCharacterSheet(pdf, race, Class, job, age, height, eye, hair, ABS, talent
 
         # pull out these item for later
         armour = ['Leather Breastplate',
-                  'Leather Gloves',
                   'Leather Jack',
                   'Leather Jerkin',
-                  'Leather Leggings']
-                  
+                  'Leather Leggings',
+                  'Mail Shirt']
+        # location enc ap qualities
+        a_stat = {'Leather Breastplate': ('Body', '2', '2', 'Weakpoints'),
+                  'Leather Jack': ('Arms, Body', '1', '1', ''),
+                  'Leather Jerkin': ('Body', '1', '1', ''),
+                  'Leather Leggings': ('Legs', '1', '1', ''),
+                  'Mail Shirt': ('Body', '2', '2', 'Flexible')}
+        # group enc r/r damage qualities
         weapons = ['Axe',
                    'Dagger',
                    'Flail',
                    'Knuckledusters',
-                   'Mail Shirt',
                    'Hand Weapon',
                    'Hand Weapon (Boat Hook)',
-                   'Hand Weapon or Rapier',
+                   'Rapier',
                    'Hand Weapon (Sword)',
                    'Shield',
-                   'Weapon (Any Melee)']
+                   'Weapon (Any Melee)' ]
+        w_stat =  {'Axe': ['Basic', '1', 'Average', 'SL+SB+4', ''],
+                   'Dagger': ['Basic', '0', 'Varies', 'SL+SB+2', ''],
+                   'Flail': ['Flail', '1', 'Average', 'SL+SB+5', 'Distract, Wrap'],
+                   'Knuckledusters': ['Brawling', '0', 'Personal', 'SL+SB+2', ''],
+                   'Hand Weapon': ['Basic', '1', 'Average', 'SL+SB+4', ''],
+                   'Hand Weapon (Boat Hook)': ['Basic', '1', 'Average', 'SL+SB+4', ''],
+                   'Rapier': ['Fencing', '1', 'Long', 'SL+SB+4', 'Fast, Impale'],
+                   'Hand Weapon (Sword)': ['Basic', '1', 'Average', 'SL+SB+4', ''],
+                   'Shield': ['Basic', '1', 'Very Short', 'SL+SB+2', 'Shield 2, Defensive, Undamaging'],
+                   'Weapon (Any Melee)':['', '', '', '', ''] }
 
         # career trappings
         count2 = 0
@@ -552,12 +575,14 @@ def getCharacterSheet(pdf, race, Class, job, age, height, eye, hair, ABS, talent
         c.drawString(10, curry, 'Name                 | Location | Enc | AP | Qualities')
         left = len(any_a)
         while len(any_a) != 0:
-                curry -= 25        
-                next_insert(form, 10, curry, 150, 20, any_a[0])
-                next_insert(form, 177, curry, 55, 20, '')
-                next_insert(form, 252, curry, 25, 20, '')
-                next_insert(form, 290, curry, 30, 20, '')
-                next_insert(form, 330, curry, 250, 20, '')
+                curry -= 25
+                key = any_a[0]
+                values = a_stat[key]
+                next_insert(form, 10, curry, 150, 20, key)
+                next_insert(form, 177, curry, 55, 20, values[0])
+                next_insert(form, 252, curry, 25, 20, values[1])
+                next_insert(form, 290, curry, 30, 20, values[2])
+                next_insert(form, 330, curry, 250, 20, values[3])
                 any_a = any_a[1:]
         
         for i in range(left, 6):
@@ -608,12 +633,14 @@ def getCharacterSheet(pdf, race, Class, job, age, height, eye, hair, ABS, talent
         left = len(any_w)
         while len(any_w) != 0:
                 curry -= 25
-                next_insert(form, 10, curry, 150, 20, any_w[0])
-                next_insert(form, 169, curry, 50, 20, '')
-                next_insert(form, 233, curry, 25, 20, '')
-                next_insert(form, 267, curry, 40, 20, '')
-                next_insert(form, 313, curry, 60, 20, '')
-                next_insert(form, 377, curry, 213, 20, '')
+                key = any_w[0]
+                values = w_stat[key]
+                next_insert(form, 10, curry, 150, 20, key)
+                next_insert(form, 169, curry, 50, 20, values[0])
+                next_insert(form, 233, curry, 25, 20, values[1])
+                next_insert(form, 267, curry, 40, 20, values[2])
+                next_insert(form, 313, curry, 60, 20, values[3])
+                next_insert(form, 377, curry, 213, 20, values[4])
                 any_w = any_w[1:]
                 
         for i in range(left, 6):
@@ -1122,7 +1149,7 @@ def GetCareerData(Class, career):
                                                    'Distract',
                                                    'Feint',
                                                    'Step Aside'),
-                                                  ('Hand Weapon or Rapier',
+                                                  ('Rapier',
                                                    'Sling Bag containing Clothing', 
                                                    str(D(10))+' Bandages'), 71),
                                  'Envoy': path('Herald',
