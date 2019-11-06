@@ -13,6 +13,7 @@
 import numpy as np
 import pdfrw                           
 import sys
+import os
 import numpy as np
 import pandas as pd
 import random
@@ -57,13 +58,14 @@ def main():
         filename = args[3][11:]
         textfile = args[3][11:]
         myClass = ''
-        thres = 3
+        thres = 1
         if len(filename) < thres:
                 filename = 'out.pdf'
                 textfile = 'out.txt'
         else:
                 filename = filename+".pdf"
-                textfile = textfile+".pdf"
+                textfile = textfile+".txt"
+                os.system("touch {}".format(textfile))
                 
         if len(Race) < thres and len(myJob) < thres:
                 #print('no race or career')
@@ -526,23 +528,28 @@ def getCharacterSheet(pdf, race, Class, job, age, height, eye, hair, ABS, talent
                 
         pad = abs(count - count2)
         e = 0
-        #print(count, count2, pad)
-        curry +=tbs*2*pad
+        # special cases
+        if (curry == 715 and pad*2*tbs): curry +=tbs*2
+        else:                            curry +=tbs*2*pad
+        
         if count > count2:
                 curry -=2*tbs
                 while e < pad:
+                        #print(e)
                         curry -=2*tbs
                         next_insert(form, 380, curry, 160, 20, '')
                         next_insert(form, 550, curry, 22, 20, '')
                         e+=1
         elif count < count2:
                 while e < pad:
+                        #print(e)
                         curry -=2*tbs
                         next_insert(form, 10, curry, 150, 20, '')
                         next_insert(form, 165, curry, 22, 20, '')
                         next_insert(form, 200, curry, 175, 20, '')                
                         e +=1
         e=max(count,count2)
+        print(e)
         while e < 11:
                 curry -=2*tbs
                 next_insert(form, 10, curry, 150, 20, '')
@@ -1914,7 +1921,8 @@ def GetCareerData(Class, career):
                                                         'Religious Symbol',
                                                         'Robes',
                                                         'Weapon (Any Melee)'), 116)}}
-
+                
+        
         
         return Ca_path[Class][career]
 
