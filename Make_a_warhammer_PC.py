@@ -178,11 +178,11 @@ def GetMoney(status):
         cl, cn = status.split(' ')
         cn = int(cn)
         if (cl =="Brass"):
-                return (0, 0, sum([D(10) for i in range(0, 2*cn)]))
+                return (sum([D(10) for i in range(0, 2*cn)]), 0, 0)
         elif (cl == 'Silver'):
                 return (0, sum([D(10) for i in range(0, cn)]), 0)
         else:
-                return (cn, 0, 0)
+                return (0, 0, cn)
         
 
 
@@ -190,7 +190,7 @@ def getCharacterSheet(pdf, race, Class, job, age, height, eye, hair, ABS, talent
         c = canvas.Canvas(pdf)
         curry = 820
         c.setFont("Courier", 20)
-        c.drawCentredString(300, curry, 'War Hammer Character Sheet')
+        c.drawCentredString(300, curry, 'Warhammer Character Sheet')
         c.setFont("Courier", 14)
         form = c.acroForm
         ### Top of page 1
@@ -549,7 +549,7 @@ def getCharacterSheet(pdf, race, Class, job, age, height, eye, hair, ABS, talent
                         next_insert(form, 200, curry, 175, 20, '')                
                         e +=1
         e=max(count,count2)
-        print(e)
+        #print(e)
         while e < 11:
                 curry -=2*tbs
                 next_insert(form, 10, curry, 150, 20, '')
@@ -809,7 +809,8 @@ def GetAbScore(race):
         SB = int(absNums['S']/10)
         TB = int(absNums['T']/10)
         WPB = int(absNums['WP']/10)
-        absNums['Wounds'] = SB+2*TB+WPB
+        if race == 'Halfling': absNums['Wounds'] = 2*TB+WPB
+        else:                  absNums['Wounds'] = SB+2*TB+WPB
         absNums['Enc'] = SB+TB
         your_abScore['Wounds'] = "SB + 2*TB + WPB = %d + %d + %d = %2d" %(SB, (2*TB), WPB, absNums['Wounds'])
         your_abScore['Enc'] = "SB + TB = %d + %d = %2d" %(SB, (TB), absNums['Enc'])
@@ -826,8 +827,7 @@ def GetAbScore(race):
 
 def GetClassTrappings(Class):
         trap = {'ACADEMICS': ('Clothing', 'Dagger', 'Pouch',
-                              'Sling Bag', 'Writing Kit', str(D(10)) +' sheets of Parchment'),
-                'BURGHERS':  ('Cloak', 'Clothing', 'Dagger',
+                              'Sling Bag', 'Writing Kit', str(D(10)) +' sheets of Parchment'),                'BURGHERS':  ('Cloak', 'Clothing', 'Dagger',
                               'Hat', 'Pouch', 'Sling Bag', 'Lunch'),
                 'COURTIERS': ('Dagger', 'Fine Clothing',
                               'Pouch', 'Tweezers', 'Ear Pick', 'Comb'),
