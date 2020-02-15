@@ -94,8 +94,8 @@ def main():
                 
                 txt.write("\n\nSKILLS:\t(Pick three with 3 pts Advance, and three with 5 pts Advance):\n")
                 [txt.write("\t%s\n" %sk) for sk in race_skills ]
-                txt.write("FROM CAREER: (you get 40 advances betwwen the eight, with a max of 10 in any one skill)\n")
-                [txt.write("\t%s\n" %sk) for sk in cp.skills ]
+                txt.write("FROM CAREER: (you get 40 advances between the eight, with a max of 10 in any one skill)\n")
+                #[txt.write("\t%s\n" %sk) for sk in cp.skills ]
                 '''txt.write("Go to your Career Path and Spend 40 pts Advance on your starting skills \n\
         (Max 10pts per skill with these points) Note there is enough Advance \n\
         to put 5 pts in each skill in your starting class (which is required to level up)!\n")'''
@@ -707,7 +707,7 @@ def GetRace():
         
 
 def GetMyClass(job):
-        cc = touch_my_pickle("classes_table.pickle")
+        cc = touch_my_pickle("Pickles/classes_table.pickle")
         return cc[job]
 
         
@@ -721,8 +721,8 @@ def GetAJob(race):
         # Then you can look up the Class in the Class dic
         # ex: human_classes = {'Academic': [..., 'Nun',...], ...}
         
-        master_map = touch_my_pickle("career_table.pickle")
-        career_class = touch_my_pickle("classes_table.pickle")
+        master_map = touch_my_pickle("Pickles/career_table.pickle")
+        career_class = touch_my_pickle("Pickles/classes_table.pickle")
         # TIME TO ROLL
         roll = D(100)
         # print("career roll = " +str(roll))
@@ -1910,7 +1910,7 @@ def GetRaceTalents(race):
         if isRand[0] in ('2', '3'):
                 these_tal = these_tal[:-1]
                 numRT = int(isRand[0])
-                randTab = touch_my_pickle("RandTalent_table.pickle")
+                randTab = touch_my_pickle("Pickles/RandTalent_table.pickle")
                 i=0
                 while i < numRT:
                         my_roll = D(100)
@@ -1930,7 +1930,7 @@ def GetRaceTalents(race):
 
         
 def GetRaceSkills(race):
-        race_skill = {"Human":    ('Animal Care', 'Charm, Cool', 'Evaluate', 'Gossip', 'Haggle',
+        race_skill = {"Human":    ('Animal Care', 'Charm', 'Cool', 'Evaluate', 'Gossip', 'Haggle',
                                    'Language (Bretonnian)', 'Language (Wastelander)', 'Leadership',
                                    'Lore (Reikland)', 'Melee (Basic)', 'Ranged (Bow)'),
                       "Dwarf":    ('Consume Alcohol', 'Cool', 'Endurance', 'Entertain (Storytelling)',
@@ -1949,7 +1949,7 @@ def GetRaceSkills(race):
 
 
 def GetPhysicalFeatures(race):
-        eye_table = touch_my_pickle("eye_table.pickle")
+        eye_table = touch_my_pickle("Pickles/eye_table.pickle")
         eye_roll = D(10) + D(10)
         eye_color = ''
         for color, nums in eye_table[race].items():
@@ -1957,7 +1957,7 @@ def GetPhysicalFeatures(race):
                         eye_color = color
                 
         
-        hair_table = touch_my_pickle("hair_table.pickle")
+        hair_table = touch_my_pickle("Pickles/hair_table.pickle")
         hair_roll = D(10) + D(10)
         hair_color = ''
         for color, nums in hair_table[race].items():
